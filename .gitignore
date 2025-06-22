@@ -1,0 +1,32 @@
+# Node modules
+node_modules/
+# Composer vendors (caso use composer)
+vendor/
+# VSCode config pessoal
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+# Configs de ambiente
+.env
+*.env
+# Arquivos temporários
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+# Pastas/arquivos de build
+dist/
+build/
+# Banco de dados local
+*.sqlite
+*.db
+*.sql
+# Ignorar uploads (se não quiser versionar imagens do cliente)
+uploads/
+# Ignorar a própria pasta do Git (por segurança)
+.git/
+/nbproject/
+.idea/
+/.vscode/
+/config.php
+/secret.php
