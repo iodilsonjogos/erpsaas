@@ -35,7 +35,7 @@
                 Serviço:
                 <select id="servicoAgendamento" required>
                     <option value="">Selecione...</option>
-            </select>
+                </select>
             </label>
             <label>
                 Data:
@@ -51,32 +51,47 @@
 </div>
 
 <!-- Modal Fila de Espera -->
-<div id="modalFilaEspera" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" id="fecharModalFila">&times;</span>
-    <h3>Adicionar à Fila de Espera</h3>
-    <form id="formFilaEspera" autocomplete="off">
-      <label for="buscaCliente">Buscar Cliente:</label>
-      <input type="text" id="buscaCliente" placeholder="Nome, telefone..." autocomplete="off">
-      <div id="resultBusca" style="margin-bottom: 10px;"></div>
-      <label for="nomeManual">Nome manual (caso não cadastrado):</label>
-      <input type="text" id="nomeManual" placeholder="Digite o nome completo">
-      <label for="servicoFila">Serviço desejado:</label>
-      <input type="text" id="servicoFila" placeholder="Ex: Corte, Consulta...">
-      <label for="telefoneFila">Telefone (opcional):</label>
-      <input type="text" id="telefoneFila" placeholder="(99) 99999-9999">
-      <label for="obsFila">Observação:</label>
-      <textarea id="obsFila" placeholder="Observação extra"></textarea>
-      <button type="submit" class="btn-principal" style="margin-top:10px;">Adicionar</button>
-    </form>
-  </div>
+<!-- Modal Fila de Espera -->
+<div id="modalOverlayFila" class="modal-overlay" style="display:none;" onclick="fecharModalFila(event)">
+    <div class="modal-fila-form" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="fecharModalFila(event)">&times;</span>
+        <h2>Adicionar à Fila de Espera</h2>
+        <form id="formFilaEspera" autocomplete="off">
+            <div class="form-group">
+                <label for="buscaCliente">Buscar cliente (nome, telefone, CPF):</label>
+                <input id="buscaCliente" type="text" placeholder="Digite nome, telefone ou CPF" autocomplete="off">
+                <div id="resultBusca"></div>
+            </div>
+            <div class="form-group">
+                <label for="nomeManual">Nome do cliente:</label>
+                <input id="nomeManual" type="text" placeholder="Nome do cliente" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="servicoFila">Serviço:</label>
+                <input id="servicoFila" type="text" placeholder="Serviço desejado" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="telefoneFila">Telefone:</label>
+                <input id="telefoneFila" type="text" placeholder="(99) 99999-9999" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="obsFila">Observação:</label>
+                <textarea id="obsFila" placeholder="Observação"></textarea>
+            </div>
+        </form>
+        <div class="adicionar-fila" style="display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-primary" form="formFilaEspera" onclick="abrirModalFila()">Adicionar à fila</button>
+            <button type="button" class="btn btn-secundario" onclick="adicionarFilaECadastrar()">Fila + Cadastro Cliente</button>
+        </div>
+    </div>
 </div>
 
+
 <!-- profissional do dia -->
- <div id="modalAgendaProf" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" onclick="fecharModalAgendaProf()">&times;</span>
-    <h3 id="tituloModalAgendaProf">Agenda do Profissional</h3>
-    <ul id="listaAgendamentosProf"></ul>
-  </div>
+<div id="modalAgendaProf" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModalAgendaProf()">&times;</span>
+        <h3 id="tituloModalAgendaProf">Agenda do Profissional</h3>
+        <ul id="listaAgendamentosProf"></ul>
+    </div>
 </div>

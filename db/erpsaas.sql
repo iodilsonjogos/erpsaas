@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 19/06/2025 às 22:53
+-- Tempo de geração: 22/06/2025 às 06:35
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.0.30
 
@@ -50,6 +50,19 @@ CREATE TABLE `agendamento_servicos` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `clientes`
+--
+
+CREATE TABLE `clientes` (
+  `id` int(11) NOT NULL,
+  `id_clinica` int(11) NOT NULL,
+  `nome` varchar(100) NOT NULL,
+  `telefone` varchar(30) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `datas_comemorativas`
 --
 
@@ -61,6 +74,13 @@ CREATE TABLE `datas_comemorativas` (
   `descricao` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `datas_comemorativas`
+--
+
+INSERT INTO `datas_comemorativas` (`id`, `nome`, `data`, `tipo`, `descricao`) VALUES
+(1, 'Independência do Brasil', '2025-09-07', 'Nacional', 'Feriado nacional');
+
 -- --------------------------------------------------------
 
 --
@@ -71,6 +91,36 @@ CREATE TABLE `especialidades` (
   `id` int(11) NOT NULL,
   `nome` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `fila_espera`
+--
+
+CREATE TABLE `fila_espera` (
+  `id` int(11) NOT NULL,
+  `id_clinica` int(11) NOT NULL,
+  `id_cliente` int(11) DEFAULT NULL,
+  `nome_manual` varchar(120) DEFAULT NULL,
+  `servico` varchar(80) DEFAULT NULL,
+  `telefone` varchar(20) DEFAULT NULL,
+  `data_hora_entrada` datetime NOT NULL DEFAULT current_timestamp(),
+  `data_hora_saida` datetime DEFAULT NULL,
+  `status` enum('na_fila','atendido','removido') NOT NULL DEFAULT 'na_fila',
+  `observacao` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `fila_espera`
+--
+
+INSERT INTO `fila_espera` (`id`, `id_clinica`, `id_cliente`, `nome_manual`, `servico`, `telefone`, `data_hora_entrada`, `data_hora_saida`, `status`, `observacao`) VALUES
+(1, 1, NULL, 'Junior filho', 'corte', '84994753059', '2025-06-20 02:31:31', '2025-06-20 23:05:08', 'atendido', 'teste n-10'),
+(2, 1, NULL, 'iane Luz', 'unha', '84987654321', '2025-06-20 03:08:28', NULL, 'na_fila', 'teste n-11'),
+(3, 1, NULL, 'Flavia costa', 'dedpilação', '84988778899', '2025-06-20 03:21:40', '2025-06-20 23:04:50', 'removido', 'teste n12'),
+(4, 1, NULL, 'miguel Luz', 'Corte', '84987654321', '2025-06-20 23:04:36', NULL, 'na_fila', 'teste n- 12'),
+(5, 1, NULL, 'Iodilson Junior', 'corte', '84994753059', '2025-06-20 23:16:40', NULL, 'na_fila', 'teste n-15');
 
 -- --------------------------------------------------------
 
@@ -98,8 +148,16 @@ CREATE TABLE `profissionais` (
   `uf` char(2) DEFAULT NULL,
   `foto` varchar(255) DEFAULT NULL,
   `atendimentos` int(11) DEFAULT 0,
-  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp(),
+  `status` enum('disponivel','atendimento','pausa') NOT NULL DEFAULT 'disponivel'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `profissionais`
+--
+
+INSERT INTO `profissionais` (`id`, `nome`, `email`, `telefone`, `documento`, `tipo_doc`, `data_nascimento`, `genero`, `especialidades`, `disponibilidade`, `cep`, `endereco`, `numero`, `complemento`, `bairro`, `cidade`, `uf`, `foto`, `atendimentos`, `criado_em`, `status`) VALUES
+(1, 'Maria Silva', NULL, NULL, NULL, NULL, '1989-07-15', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '2025-06-19 21:05:24', 'disponivel');
 
 -- --------------------------------------------------------
 
@@ -145,6 +203,12 @@ ALTER TABLE `agendamento_servicos`
   ADD KEY `servico_id` (`servico_id`);
 
 --
+-- Índices de tabela `clientes`
+--
+ALTER TABLE `clientes`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `datas_comemorativas`
 --
 ALTER TABLE `datas_comemorativas`
@@ -155,6 +219,15 @@ ALTER TABLE `datas_comemorativas`
 --
 ALTER TABLE `especialidades`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `fila_espera`
+--
+ALTER TABLE `fila_espera`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_clinica` (`id_clinica`),
+  ADD KEY `status` (`status`),
+  ADD KEY `id_cliente` (`id_cliente`);
 
 --
 -- Índices de tabela `profissionais`
@@ -193,10 +266,16 @@ ALTER TABLE `agendamento_servicos`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `clientes`
+--
+ALTER TABLE `clientes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `datas_comemorativas`
 --
 ALTER TABLE `datas_comemorativas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de tabela `especialidades`
@@ -205,10 +284,16 @@ ALTER TABLE `especialidades`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `fila_espera`
+--
+ALTER TABLE `fila_espera`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
 -- AUTO_INCREMENT de tabela `profissionais`
 --
 ALTER TABLE `profissionais`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de tabela `profissional_especialidade`
@@ -250,20 +335,3 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
-
-CREATE TABLE fila_espera (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_clinica INT NOT NULL,           -- Para sistemas SaaS multiunidade
-    id_cliente INT DEFAULT NULL,       -- FK para tabela de clientes (opcional)
-    nome_manual VARCHAR(120) DEFAULT NULL, -- Se não for cliente cadastrado
-    servico VARCHAR(80) DEFAULT NULL,  -- Serviço desejado (ou id_servico, se preferir)
-    telefone VARCHAR(20) DEFAULT NULL, -- Para contato rápido/WhatsApp
-    data_hora_entrada DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    data_hora_saida DATETIME DEFAULT NULL,   -- Quando foi atendido/removido
-    status ENUM('na_fila', 'atendido', 'removido') NOT NULL DEFAULT 'na_fila',
-    observacao TEXT,
-    INDEX (id_clinica),
-    INDEX (status),
-    INDEX (id_cliente)
-);

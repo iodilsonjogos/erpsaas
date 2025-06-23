@@ -1,25 +1,31 @@
 <?php
-header('Content-Type: application/json');
-include_once(__DIR__ . '/conexao.php');
-session_start();
-$id_clinica = $_SESSION['id_clinica'] ?? 1;
+require_once(__DIR__ . '/conexao.php'); // Ou db.php conforme sua estrutura
 
 $q = trim($_GET['q'] ?? '');
-if (!$q) { echo json_encode([]); exit; }
 
-// Busca nome, telefone, CPF (ajuste os campos se necessário)
-$sql = "SELECT id, nome, telefone FROM clientes 
-        WHERE id_clinica = ? AND (nome LIKE ? OR telefone LIKE ?)
-        ORDER BY nome ASC LIMIT 10";
-$stmt = $conn->prepare($sql);
-$like = "%$q%";
-$stmt->bind_param('iss', $id_clinica, $like, $like);
-$stmt->execute();
-$res = $stmt->get_result();
-$dados = [];
-while ($row = $res->fetch_assoc()) {
-    $dados[] = $row;
+if (strlen($q) < 3) {
+    echo json_encode([]);
+    exit;
 }
-echo json_encode($dados);
-exit;
-?>
+
+$stmt = $conn->prepare("
+    SELECT id, nome, telefone, cpf 
+    FROM clientes 
+    WHERE nome LIKE CONCAT('%', ?, '%')
+    OR telefone LIKE CONCAT('%', ?, '%')
+    OR cpf LIKE CONCAT('%', ?, '%')
+    LIMIT 10
+");
+if (!$stmt) {
+    // DEBUG: Exiba o erro do MySQL (remova isso em produção)
+    echo json_encode(['erro' => $conn->error]);
+    exit;
+}
+$stmt->bind_param("sss", $q, $q, $q);
+$stmt->execute();
+$result = $stmt->get_result();
+$clientes = [];
+while ($cli = $result->fetch_assoc()) {
+    $clientes[] = $cli;
+}
+echo json_encode($clientes);

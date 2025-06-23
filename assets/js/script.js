@@ -58,25 +58,33 @@ if (modalAgendamento && fecharModalAgendamento) {
         if (e.target === modalAgendamento) modalAgendamento.style.display = 'none';
     });
 }
+// ================= PAINEL FILA DE ESPERA ATUALIZADO =================
 
-// Abrir modal
-document.getElementById('btnAddFila').onclick = function() {
-    document.getElementById('modalFilaEspera').style.display = 'flex';
-};
-// Fechar modal
-document.getElementById('fecharModalFila').onclick = function() {
-    document.getElementById('modalFilaEspera').style.display = 'none';
-};
+// Abrir o modal centralizado (novo padrão)
+function abrirModalFila() {
+  document.getElementById('modalOverlayFila').style.display = 'flex';
+}
+// Fechar modal ao clicar no X ou fora do modal
+function fecharModalFila(event) {
+  if (!event || event.target === document.getElementById('modalOverlayFila') || event.target.classList.contains('modal-close')) {
+    document.getElementById('modalOverlayFila').style.display = 'none';
+  }
+}
 
-// Submeter formulário
+// Botão para abrir o modal
+const btnAddFila = document.getElementById('btnAddFila');
+if (btnAddFila) btnAddFila.onclick = abrirModalFila;
+
+// ================= FORMULÁRIO FILA =================
+
 document.getElementById('formFilaEspera').onsubmit = function(e) {
     e.preventDefault();
-    const id_cliente = buscaCliente.dataset.id_cliente || '';
+    const buscaCliente = document.getElementById('buscaCliente');
+    const id_cliente = buscaCliente && buscaCliente.dataset.id_cliente ? buscaCliente.dataset.id_cliente : '';
     const nome_manual = document.getElementById('nomeManual').value.trim();
     const servico = document.getElementById('servicoFila').value.trim();
     const telefone = document.getElementById('telefoneFila').value.trim();
     const observacao = document.getElementById('obsFila').value.trim();
-    // Verifica se foi selecionado cliente ou preenchido nome manual:
     if (!id_cliente && !nome_manual) { 
         alert('Informe o nome do cliente!'); 
         return; 
@@ -85,26 +93,25 @@ document.getElementById('formFilaEspera').onsubmit = function(e) {
         method: 'POST',
         body: new URLSearchParams({
             action: 'add',
+            id_cliente,
             nome_manual,
             servico,
             telefone,
             observacao
-            
         })
-        
     }).then(r=>r.json()).then(res => {
         if (res.success) {
-            document.getElementById('modalFilaEspera').style.display = 'none';
+            fecharModalFila();
             document.getElementById('formFilaEspera').reset();
-            if (buscaCliente) buscaCliente.dataset.id_cliente = ''; // limpa seleção
-            carregarFilaEspera(); // Atualiza a lista!
+            if (buscaCliente) buscaCliente.dataset.id_cliente = '';
+            carregarFilaEspera();
         } else {
             alert(res.msg || 'Erro ao adicionar à fila!');
         }
     });
 };
 
-// ========== FILA DE ESPERA - INTEGRADA COM API ==========
+// ========== ATUALIZAR LISTA DA FILA ==========
 function carregarFilaEspera() {
     fetch('includes/fila_espera.php?action=list')
         .then(r=>r.json()).then(res => {
@@ -142,30 +149,30 @@ function carregarFilaEspera() {
             </div>
         </li>
     `;
-
-
         });
     });
 }
-
-function adicionarAFila(dados) {
-    fetch('includes/fila_espera.php', {
-        method: 'POST',
-        body: new URLSearchParams({
-            action: 'add',
-            ...dados
-        })
-    }).then(r=>r.json()).then(res => {
-        if (res.success) {
-            if(document.getElementById('modalFilaEspera'))
-                document.getElementById('modalFilaEspera').style.display = 'none';
-            carregarFilaEspera();
-        } else {
-            alert(res.msg || 'Erro ao adicionar à fila!');
-        }
-    });
+//==============Adicionar fila + cadastro======
+function adicionarFilaECadastrar() {
+  // Simula o submit do formulário (adiciona à fila)
+  const formFila = document.getElementById('formFilaEspera');
+  if (formFila) {
+    // Força o submit do form
+    formFila.dispatchEvent(new Event('submit', {bubbles:true, cancelable:true}));
+  }
+  // Aguarda um pouquinho para não conflitar com o submit, depois abre o modal de cadastro de cliente
+  setTimeout(() => {
+    abrirModalCadastroCliente(); // Implemente essa função!
+  }, 600);
 }
 
+function abrirModalCadastroCliente() {
+  // Aqui, implemente a lógica para abrir seu modal de cadastro completo de cliente
+  // Exemplo inicial:
+  alert('Abrir modal de cadastro de cliente!');
+}
+
+// ========== REMOVER/ATENDER NA FILA ==========
 function removerFila(id, tipo) {
     let msg = (tipo === 'removido') 
       ? 'Deseja remover este cliente da fila?' 
@@ -183,24 +190,22 @@ function removerFila(id, tipo) {
     });
 }
 
-// Chame ao carregar página:
-carregarFilaEspera();
-
+// ========== PESQUISA AUTOMÁTICA DE CLIENTE ==========
 const buscaCliente = document.getElementById('buscaCliente');
 if (buscaCliente) {
     buscaCliente.oninput = function() {
         const q = buscaCliente.value.trim();
         if (q.length < 3) {
             document.getElementById('resultBusca').innerHTML = '';
-            buscaCliente.dataset.id_cliente = ''; // limpa seleção
+            buscaCliente.dataset.id_cliente = '';
             return;
         }
         fetch('includes/api_buscar_cliente.php?q=' + encodeURIComponent(q))
             .then(r=>r.json()).then(lista => {
                 let html = '';
                 lista.forEach(cli => {
-                    html += `<div class="cliSugestao" data-id="${cli.id}" data-nome="${cli.nome}" data-tel="${cli.telefone}">
-                                <b>${cli.nome}</b> <small>${cli.telefone}</small>
+                    html += `<div class="cliSugestao" data-id="${cli.id}" data-nome="${cli.nome}" data-tel="${cli.telefone}" data-cpf="${cli.cpf}">
+                                <b>${cli.nome}</b> <small>${cli.telefone} ${cli.cpf ? 'CPF: '+cli.cpf : ''}</small>
                             </div>`;
                 });
                 document.getElementById('resultBusca').innerHTML = html;
@@ -216,6 +221,10 @@ if (buscaCliente) {
             });
     };
 }
+
+// Sempre carrega a fila ao abrir a página
+document.addEventListener('DOMContentLoaded', carregarFilaEspera);
+
 
 // ========== MINI CALENDÁRIO LATERAL ==========
 // ---- MINI CALENDÁRIO INTERATIVO INTEGRADO COM FULLCALENDAR E API ----
