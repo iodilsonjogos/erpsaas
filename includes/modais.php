@@ -15,40 +15,53 @@
     </div>
 </div>
 
-<!-- Modal Agendamento do Calendário -->
-<div class="modal-agendamento" id="modalAgendamento" style="display:none;">
-    <div class="modal-conteudo">
-        <button class="modal-fechar" id="fecharModalAgendamento">&times;</button>
-        <h3>Novo Agendamento</h3>
-        <form id="formAgendamento" method="POST" action="includes/salvar_agendamento.php">
-            <label>
-                Cliente:
-                <input type="text" id="clienteAgendamento" required>
-            </label>
-            <label>
-                Profissional:
-                <select id="profissionalAgendamento" required>
-                    <option value="">Selecione...</option>
-                </select>
-            </label>
-            <label>
-                Serviço:
-                <select id="servicoAgendamento" required>
-                    <option value="">Selecione...</option>
-                </select>
-            </label>
-            <label>
-                Data:
-                <input type="date" id="dataAgendamento" required>
-            </label>
-            <label>
-                Horário:
-                <input type="time" id="horaAgendamento" required>
-            </label>
-            <button type="submit">Agendar</button>
+<!-- Modal de agendamento (montado por JS ou pode deixar o HTML fixo, como preferir) -->
+<div id="modalAgendamento" class="modal-overlay" style="display:none;">
+    <div class="modal-form" onclick="event.stopPropagation()" style="max-width:420px;">
+        <h2 class="modal-titulo">Novo Agendamento</h2>
+        <form id="formAgendamento" autocomplete="off">
+            <div class="form-group">
+                <label>Cliente</label>
+                <input type="text" id="buscaClienteAgendamento" autocomplete="off" placeholder="Nome, telefone ou CPF..." />
+                <div id="resultBuscaClienteAgendamento"></div>
+                <button type="button" class="btn btn-linha" onclick="abrirModalCadastroCliente()">Novo Cliente</button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Profissional</label>
+                    <select id="profissionalAgendamento" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Serviço</label>
+                    <select id="servicoAgendamento" required></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="text" id="valorAgendamento" disabled />
+                </div>
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="dataAgendamento" required />
+                </div>
+                <div class="form-group">
+                    <label>Hora</label>
+                    <input type="time" id="horaAgendamento" required />
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Observação</label>
+                <input type="text" id="obsAgendamento" />
+            </div>
+            <div class="form-rodape">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <button type="button" class="btn btn-secundario" onclick="fecharModalAgendamento()">Cancelar</button>
+            </div>
         </form>
     </div>
 </div>
+
 
 <!-- Modal Fila de Espera -->
 <!-- Modal Fila de Espera -->

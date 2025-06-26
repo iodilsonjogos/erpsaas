@@ -1,3 +1,87 @@
+// =================== SPA: Carregamento dinâmico de JS por módulo ===================
+// Cole este bloco no topo do seu script.js global (já incluso na index.php ou página principal).
+
+const moduloScripts = {
+  dashboard:     "assets/js/dash.js",
+  home:          "assets/js/script.js",
+  agenda:        "assets/js/agenda.js",
+  vendas:        "assets/js/vendas.js",
+  clientes:      "assets/js/clientes.js",
+  profissionais: "assets/js/prof.js",
+  produtos:      "assets/js/produtos.js",
+  servicos:      "assets/js/servicos.js",
+  relatorios:    "assets/js/relatorios.js",
+  financeiro:    "assets/js/financeiro.js",
+  configuracoes: "assets/js/config.js"
+};
+
+window.scriptsModulosCarregados = {}; // Armazena módulos já carregados
+
+/**
+ * Carrega dinamicamente o script JS de um módulo SPA.
+ * @param {string} nomeModulo - Nome igual ao usado no objeto moduloScripts.
+ * @param {function} callback - Função opcional para executar após o carregamento.
+ */
+function loadScriptModulo(nomeModulo, callback) {
+  if (window.scriptsModulosCarregados[nomeModulo]) {
+    // Script já carregado, executa o callback se existir
+    if (typeof callback === "function") callback();
+    return;
+  }
+  if (!moduloScripts[nomeModulo]) {
+    console.warn("Script do módulo não encontrado:", nomeModulo);
+    return;
+  }
+  var script = document.createElement('script');
+  script.src = moduloScripts[nomeModulo];
+  script.onload = function() {
+    window.scriptsModulosCarregados[nomeModulo] = true;
+    if (typeof callback === "function") callback();
+  };
+  document.body.appendChild(script);
+}
+
+// =================== EXEMPLO DE USO EM SPA ===================
+// Suponha que você tenha um menu SPA que carrega módulos em uma div chamada #conteudo
+
+function abrirModulo(nomeModulo, urlModuloPHP) {
+  // Exemplo de carregar o HTML do módulo por AJAX (você pode adaptar para fetch ou outra forma)
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", urlModuloPHP, true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      document.getElementById("conteudo").innerHTML = xhr.responseText;
+
+      // Agora carregue o JS do módulo correspondente
+      loadScriptModulo(nomeModulo, function() {
+        // Se precisar, chame função de inicialização do módulo
+        if (typeof window['inicializar' + capitalize(nomeModulo)] === "function") {
+          window['inicializar' + capitalize(nomeModulo)]();
+        }
+      });
+    }
+  };
+  xhr.send();
+}
+
+// Função utilitária para capitalizar a primeira letra
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/*
+Como usar:
+Para abrir o módulo vendas:
+abrirModulo('vendas', 'modulos/vendas.php');
+
+Para abrir o dashboard:
+abrirModulo('dashboard', 'modulos/dashboard.php');
+
+Para abrir clientes:
+abrirModulo('clientes', 'modulos/clientes.php');
+
+...e assim por diante!
+*/
 
 // ========== MENU LATERAL RETRÁTIL ==========
 const toggleBtn = document.getElementById('toggle-menu');
@@ -726,6 +810,7 @@ function carregarModuloDoHash() {
             .then(html => {
                 areaConteudo.innerHTML = html;
                 // Se usar scripts ou ícones, atualize aqui!
+            loadScriptModulo(modulo);
             })
             .catch(() => {
                 areaConteudo.innerHTML = '<p>Erro ao carregar a página.</p>';

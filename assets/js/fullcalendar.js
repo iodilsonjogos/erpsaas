@@ -1,8 +1,13 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const hoje = new Date();
-    montarMiniCalendario(hoje.getMonth(), hoje.getFullYear());
+function inicializarFullCalendar() {
     var calendarEl = document.getElementById('fullcalendar');
-        events: 'includes/api_agendamentos.php',
+    if (!calendarEl) return;
+
+    // Destrói se já existir (ex: navegação SPA)
+    if (window.myCalendar) {
+        window.myCalendar.destroy();
+        window.myCalendar = null;
+    }
+
     window.myCalendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'timeGridWeek',
         allDaySlot: false,
@@ -27,16 +32,16 @@ document.addEventListener('DOMContentLoaded', function() {
             hour: '2-digit', minute: '2-digit', hour12: false
         },
         datesSet: function(info) {
-        // Toda vez que o FullCalendar muda de data/visualização, roda isso!
-        const dataAtual = info.start; // ou info.view.currentStart
-        montarMiniCalendario(dataAtual.getMonth(), dataAtual.getFullYear());
+            const dataAtual = info.start;
+            if (typeof montarMiniCalendario === "function") {
+                montarMiniCalendario(dataAtual.getMonth(), dataAtual.getFullYear());
+            }
         },
         dayCellClassNames: function(arg) {
-        if (arg.date.getDay() === 0) return ['domingo'];
-        return [];
+            if (arg.date.getDay() === 0) return ['domingo'];
+            return [];
         },
         dayHeaderContent: function(arg) {
-            // Personaliza cabeçalho do calendário
             const dias = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'];
             const root = document.createElement('div');
             root.style.display = 'flex';
@@ -55,7 +60,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return { domNodes: [root] };
         },
         dateClick: function(info) {
-            abrirModalAgendamento(info.dateStr);
+            if (typeof abrirModalAgendamento === "function") {
+                abrirModalAgendamento(info.dateStr);
+            }
             let campoData = document.getElementById('dataAgendamento');
             let campoHora = document.getElementById('horaAgendamento');
             if (campoData) {
@@ -68,7 +75,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         },
-
+        events: 'includes/api_agendamentos.php'
     });
+
     window.myCalendar.render();
+
+    // Sincronização com mini calendário
+    if (typeof setMiniCalendarioSync === "function") {
+        setMiniCalendarioSync(function(ano, mes, dia) {
+            let date = new Date(ano, mes, dia || 1);
+            window.myCalendar.gotoDate(date);
+        });
+    }
+
+    // Sincronização botão Hoje
+    if (typeof setMiniCalendarioHoje === "function") {
+        setMiniCalendarioHoje(function() {
+            window.myCalendar.today();
+        });
+    }
+}
+
+// Bloco para rodar ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    inicializarFullCalendar();
+
+    // Montar mini calendário inicial (opcional, se quiser já aparecer na home)
+    const hoje = new Date();
+    if (typeof montarMiniCalendario === "function") {
+        montarMiniCalendario(hoje.getMonth(), hoje.getFullYear());
+    }
 });

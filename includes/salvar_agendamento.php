@@ -1,14 +1,23 @@
 <?php
 include __DIR__ . '/conexao.php';
 
-// Dados recebidos
-$cliente = $_POST['cliente'];
-$profissional_id = $_POST['profissional_id'];
-$data = $_POST['data'];
-$hora_inicio = $_POST['hora_inicio']; // formato 'HH:MM'
-$servicos = $_POST['servicos']; // array de IDs
+// Receber POST tradicional OU JSON
+$data = $_POST;
+if (empty($data)) {
+    $data = json_decode(file_get_contents('php://input'), true);
+}
+
+$cliente = $data['cliente'] ?? ($data['id_cliente'] ?? '');
+$profissional_id = $data['profissional_id'] ?? '';
+$data_ag = $data['data'] ?? '';
+$hora_inicio = $data['hora'] ?? ($data['hora_inicio'] ?? '');
+$servicos = $data['servicos'] ?? (isset($data['servico_id']) ? [$data['servico_id']] : []);
+$usuario_id = $data['usuario_id'] ?? null;
+$valor = isset($data['valor']) ? $data['valor'] : null;
+$obs = $data['obs'] ?? null;
 
 // 1. Calcular tempo total do atendimento
+if (!is_array($servicos)) $servicos = [$servicos];
 $placeholders = implode(',', array_fill(0, count($servicos), '?'));
 $stmt = $conn->prepare("SELECT id, duracao FROM servicos WHERE id IN ($placeholders)");
 $stmt->bind_param(str_repeat('i', count($servicos)), ...$servicos);
@@ -21,7 +30,7 @@ while ($row = $res->fetch_assoc()) {
 }
 
 // Horário de fim
-$inicio_dt = new DateTime("$data $hora_inicio");
+$inicio_dt = new DateTime("$data_ag $hora_inicio");
 $fim_dt = clone $inicio_dt;
 $fim_dt->modify("+$duracao_total minutes");
 $hora_fim = $fim_dt->format('H:i');
@@ -30,7 +39,7 @@ $hora_fim = $fim_dt->format('H:i');
 $stmt = $conn->prepare("SELECT a.id, a.hora 
     FROM agendamentos a 
     WHERE a.profissional_id = ? AND a.data = ?");
-$stmt->bind_param("is", $profissional_id, $data);
+$stmt->bind_param("is", $profissional_id, $data_ag);
 $stmt->execute();
 $res = $stmt->get_result();
 
@@ -51,7 +60,7 @@ while ($ag = $res->fetch_assoc()) {
     }
 
     // Monta intervalo ocupado
-    $inicio_existente = new DateTime("$data {$ag['hora']}");
+    $inicio_existente = new DateTime("$data_ag {$ag['hora']}");
     $fim_existente = clone $inicio_existente;
     $fim_existente->modify("+$duracao_existente minutes");
 
@@ -64,15 +73,26 @@ while ($ag = $res->fetch_assoc()) {
 
 if ($conflito) {
     echo json_encode([
-        'sucesso' => false, 
+        'sucesso' => false,
         'msg' => 'Conflito: esse profissional já tem agendamento nesse horário!'
     ]);
     exit;
 }
 
 // 3. Inserir o agendamento e os serviços
-$stmt = $conn->prepare("INSERT INTO agendamentos (cliente, profissional_id, data, hora) VALUES (?, ?, ?, ?)");
-$stmt->bind_param("siss", $cliente, $profissional_id, $data, $hora_inicio);
+// Novo: inclui usuario_id e valor (opcionais), obs (opcional)
+$sql = "INSERT INTO agendamentos (cliente, profissional_id, data, hora, usuario_id, valor, obs) VALUES (?, ?, ?, ?, ?, ?, ?)";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param(
+    "sissids",
+    $cliente,
+    $profissional_id,
+    $data_ag,
+    $hora_inicio,
+    $usuario_id,
+    $valor,
+    $obs
+);
 if ($stmt->execute()) {
     $agendamento_id = $stmt->insert_id;
     $stmt2 = $conn->prepare("INSERT INTO agendamento_servicos (agendamento_id, servico_id) VALUES (?, ?)");

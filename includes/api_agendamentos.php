@@ -1,38 +1,63 @@
 <?php
-// includes/api_agendamentos.php
-include __DIR__ . '/conexao.php';
+require_once(__DIR__ . '/conexao.php');
 
-// Captura intervalo (FullCalendar manda start e end via GET)
-$start = isset($_GET['start']) ? $_GET['start'] : date('Y-m-01');
-$end   = isset($_GET['end'])   ? $_GET['end']   : date('Y-m-t');
+// Filtros via GET, compatíveis com os módulos antigos e o novo
+$cliente = trim($_GET['cliente'] ?? '');
+$data = trim($_GET['data'] ?? '');
+$prof = intval($_GET['profissional'] ?? 0);
 
-// Consulta todos os agendamentos do intervalo
-$sql = "SELECT a.id, a.cliente, a.profissional_id, a.servico, a.data, a.hora, 
-               p.nome AS profissional 
-        FROM agendamentos a
-        LEFT JOIN profissionais p ON p.id = a.profissional_id
-        WHERE a.data >= ? AND a.data <= ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $start, $end);
-$stmt->execute();
-$res = $stmt->get_result();
+// Montagem dinâmica dos filtros
+$where = [];
+$params = [];
+$types = '';
 
-$eventos = [];
-while ($row = $res->fetch_assoc()) {
-    // Monta evento no formato que o FullCalendar espera
-    $eventos[] = [
-        'id'    => $row['id'],
-        'title' => $row['cliente'] . ' - ' . $row['servico'] . ' (' . $row['profissional'] . ')',
-        'start' => $row['data'] . 'T' . $row['hora'],
-        // 'end' => ... pode calcular se tiver duração
-        'extendedProps' => [
-            'profissional' => $row['profissional'],
-            'servico' => $row['servico'],
-            'cliente' => $row['cliente']
-        ]
-    ];
+if ($cliente) {
+    $where[] = "c.nome LIKE ?";
+    $params[] = "%$cliente%";
+    $types .= 's';
 }
+if ($data) {
+    $where[] = "a.data = ?";
+    $params[] = $data;
+    $types .= 's';
+}
+if ($prof) {
+    $where[] = "a.profissional_id = ?";
+    $params[] = $prof;
+    $types .= 'i';
+}
+$whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
+// Suporte a múltiplos serviços no mesmo agendamento (por meio de GROUP_CONCAT)
+$sql = "SELECT 
+            a.id, 
+            IFNULL(c.nome, a.cliente) AS cliente, 
+            p.nome AS profissional, 
+            GROUP_CONCAT(s.nome SEPARATOR ', ') AS servicos, 
+            GROUP_CONCAT(s.valor SEPARATOR ', ') AS valores, 
+            a.valor AS valor_total,
+            a.data, a.hora, a.obs
+        FROM agendamentos a
+        LEFT JOIN clientes c ON a.cliente = c.id OR a.cliente = c.nome
+        LEFT JOIN profissionais p ON a.profissional_id = p.id
+        LEFT JOIN agendamento_servicos ags ON ags.agendamento_id = a.id
+        LEFT JOIN servicos s ON s.id = ags.servico_id
+        $whereSQL
+        GROUP BY a.id
+        ORDER BY a.data DESC, a.hora DESC";
+
+$stmt = $conn->prepare($sql);
+if ($types) $stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$agendamentos = [];
+while ($row = $result->fetch_assoc()) {
+    // Para exibir na tabela, podemos mostrar apenas o primeiro serviço e valor, 
+    // ou todos, conforme necessidade.
+    $row['servico'] = $row['servicos']; // compatível com front antigo
+    $row['valor'] = $row['valor_total'] ?? $row['valores'];
+    $agendamentos[] = $row;
+}
 header('Content-Type: application/json');
-echo json_encode($eventos);
-?>
+echo json_encode($agendamentos);
