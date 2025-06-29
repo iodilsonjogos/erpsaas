@@ -69,20 +69,6 @@ function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/*
-Como usar:
-Para abrir o módulo vendas:
-abrirModulo('vendas', 'modulos/vendas.php');
-
-Para abrir o dashboard:
-abrirModulo('dashboard', 'modulos/dashboard.php');
-
-Para abrir clientes:
-abrirModulo('clientes', 'modulos/clientes.php');
-
-...e assim por diante!
-*/
-
 // ========== MENU LATERAL RETRÁTIL ==========
 const toggleBtn = document.getElementById('toggle-menu');
 const menuLateral = document.getElementById('menuLateral');
@@ -112,7 +98,7 @@ if (btnAcessoRapido && popoverAtalhos) {
     document.addEventListener('click', () => popoverAtalhos.classList.remove('aberto'));
     popoverAtalhos.onclick = e => e.stopPropagation();
 }
-
+/*
 // ========== MODAL DE CADASTRO RÁPIDO DE PROFISSIONAL ==========
 const btnModalCadastroProfissional = document.getElementById('btnModalCadastroProfissional');
 const modalCadastroProf = document.getElementById('modalCadastroProf');
@@ -132,7 +118,7 @@ if (btnModalCadastroProfissional && modalCadastroProf && fecharModalCadastroProf
         if (e.target === modalCadastroProf) modalCadastroProf.style.display = 'none';
     });
 }
-
+/*
 // ========== MODAL DE AGENDAMENTO ==========
 const modalAgendamento = document.getElementById('modalAgendamento');
 const fecharModalAgendamento = document.getElementById('fecharModalAgendamento');
@@ -141,7 +127,7 @@ if (modalAgendamento && fecharModalAgendamento) {
     modalAgendamento.addEventListener('click', (e) => {
         if (e.target === modalAgendamento) modalAgendamento.style.display = 'none';
     });
-}
+}*/
 // ================= PAINEL FILA DE ESPERA ATUALIZADO =================
 
 // Abrir o modal centralizado (novo padrão)

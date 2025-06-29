@@ -378,6 +378,7 @@ margin-left: 220px;        /* espaço para menu lateral */
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: relative; 
 }
 .modal-titulo {
   font-size: 1.35em;
@@ -518,6 +519,41 @@ input[type="text"]:focus, input[type="date"]:focus, input[type="time"]:focus, se
     border: none;
     color: #e34b4b;
     cursor: pointer;
+}
+/* REMOVE BARRA DE ROLAGEM HORIZONTAL DOS MODAIS */
+.modal-form,
+.modal-agendamento,
+.modal-cadastro-prof,
+.modal-conteudo {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    box-sizing: border-box;
+}
+
+/* Garante largura do form nunca ultrapassando o modal */
+.modal-form form,
+.modal-agendamento form,
+.modal-conteudo form {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden !important;
+    box-sizing: border-box;
+}
+
+/* Em telas pequenas, força ajuste para não dar scroll lateral */
+@media (max-width: 700px) {
+    .modal-form,
+    .modal-agendamento,
+    .modal-cadastro-prof,
+    .modal-conteudo {
+        width: 98vw !important;
+        min-width: 0 !important;
+        max-width: 100vw !important;
+        left: 1vw;
+        right: 1vw;
+        padding-left: 2vw;
+        padding-right: 2vw;
+    }
 }
 
 /* modal lista espera*/

@@ -19,6 +19,7 @@
 <div id="modalAgendamento" class="modal-overlay" style="display:none;">
     <div class="modal-form" onclick="event.stopPropagation()" style="max-width:420px;">
         <h2 class="modal-titulo">Novo Agendamento</h2>
+        <button type="button" class="modal-fechar" title="Fechar">&times;</button>
         <form id="formAgendamento" autocomplete="off">
             <div class="form-group">
                 <label>Cliente</label>
@@ -62,8 +63,6 @@
     </div>
 </div>
 
-
-<!-- Modal Fila de Espera -->
 <!-- Modal Fila de Espera -->
 <div id="modalOverlayFila" class="modal-overlay" style="display:none;" onclick="fecharModalFila(event)">
     <div class="modal-fila-form" onclick="event.stopPropagation()">

@@ -141,3 +141,51 @@ function carregarAgendamentos() {
 }
 
 function filtrarAgenda() { carregarAgendamentos(); }
+
+// -------- FECHAR MODAL DE AGENDAMENTO (todas as formas) --------
+document.addEventListener('DOMContentLoaded', function () {
+    var modal = document.getElementById('modalAgendamento');
+    if (!modal) return;
+
+    // Seletores internos
+    var btnFechar = modal.querySelector('.modal-fechar');
+    var btnCancelar = modal.querySelector('.btn.btn-secundario');
+    var modalForm = modal.querySelector('.modal-form');
+
+    // Fechar ao clicar no "X"
+    if (btnFechar) {
+        btnFechar.onclick = function (e) {
+            e.preventDefault();
+            fecharModalAgendamento();
+        }
+    }
+
+    // Fechar ao clicar no botão Cancelar
+    if (btnCancelar) {
+        btnCancelar.onclick = function (e) {
+            e.preventDefault();
+            fecharModalAgendamento();
+        }
+    }
+
+    // Fechar ao clicar fora do bloco .modal-form (no overlay)
+    modal.onclick = function (e) {
+        // Só fecha se clicou direto no overlay (não dentro do form)
+        if (e.target === modal) {
+            fecharModalAgendamento();
+        }
+    }
+
+    // Bloqueia propagação de clique no .modal-form para evitar fechamento ao clicar dentro
+    if (modalForm) {
+        modalForm.onclick = function (e) {
+            e.stopPropagation();
+        }
+    }
+});
+
+// Função padrão do seu projeto para fechar o modal (mantém consistência)
+function fecharModalAgendamento() {
+    var modal = document.getElementById('modalAgendamento');
+    if (modal) modal.style.display = 'none';
+}
