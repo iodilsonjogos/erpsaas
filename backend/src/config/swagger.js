@@ -7,14 +7,31 @@ const options = {
       title: 'API SaaS de ERP',
       version: '1.0.0',
     },
-    servers: [{ url: 'http://localhost:4000/api' }],
+      securitySchemes: {
+    bearerAuth: {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT'
+    }
   },
- apis: [
-  './routes/*.js',
-  './src/routes/*.js'
-],
+    servers: [{ url: 'http://localhost:4000/api' }],
+    components: {
+      schemas: {
+        Usuario: {
+          type: "object",
+          properties: {
+            email: { type: "string" },
+            senha: { type: "string" }
+          }
+        }
+      }
+    }
+  },
+  apis: [
+    './routes/*.js',
+    './src/routes/*.js'
+  ],
 };
-
 const swaggerSpec = swaggerJSDoc(options);
 
 module.exports = swaggerSpec;

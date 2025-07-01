@@ -16,5 +16,7 @@ const dashboardCtrl = require('../controllers/dashboardController');
  *         description: Retorna indicadores do dashboard
  */
 router.get('/', auth(['admin']), dashboardCtrl.resumo);
+router.get('/vendas-mes', auth(['admin']), dashboardCtrl.vendasPorMes);
+router.get('/produtos-top', auth(['admin']), dashboardCtrl.produtosMaisVendidos);
 
 module.exports = router;

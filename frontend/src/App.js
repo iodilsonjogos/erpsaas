@@ -1,11 +1,23 @@
-import React from 'react';
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "./pages/login/LoginPage";
+import UsuariosPage from "./pages/usuarios/UsuariosPage";
+import DashboardPage from "./pages/dashboard/DashboardPage";
+
+// Simples proteção de rota: só deixa entrar se houver token
+function PrivateRoute({ children }) {
+  return localStorage.getItem("token") ? children : <Navigate to="/login" />;
+}
 
 function App() {
   return (
-    <div>
-      <h1>ERP SaaS - Frontend React Rodando!</h1>
-      <p>Se você está vendo isso, seu React está funcionando.</p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/"      element={<PrivateRoute><DashboardPage /></PrivateRoute>}/>
+        <Route path="/usuarios" element={<PrivateRoute><UsuariosPage /></PrivateRoute>}/>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -26,6 +26,10 @@ app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.get('/', (req, res) => res.send('ERP SaaS API rodando!'));
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+}
 
 app.use('/uploads', express.static('uploads'));
+module.exports = app;
