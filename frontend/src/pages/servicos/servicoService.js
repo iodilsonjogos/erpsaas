@@ -1,16 +1,17 @@
-import axios from 'axios';
+// /frontend/src/pages/servicos/servicosService.js
+import axios from "axios";
 
-const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL + '/servicos',
-});
+// Função para listar serviços
+export async function getServicos() {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get("/api/servicos", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    return [];
+  }
+}
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers['Authorization'] = `Bearer ${token}`;
-  return config;
-});
-
-export const listarServicos = () => API.get('/');
-export const criarServico = (data) => API.post('/', data);
-export const atualizarServico = (id, data) => API.put(`/${id}`, data);
-export const removerServico = (id) => API.delete(`/${id}`);
+// Adicione funções para criar, editar, excluir serviços

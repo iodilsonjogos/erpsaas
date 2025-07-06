@@ -1,79 +1,78 @@
-import React, { useEffect, useState } from 'react';
-import { listarVendas, criarVenda, atualizarVenda, removerVenda } from './vendaService';
-import VendaModal from './VendaModal';
+import React, { useState, useEffect } from "react";
+import Sidebar from "../../components/Sidebar";
+import Header from "../../components/Header";
+import TableGeneric from "../../components/TableGeneric";
+import VendasModal from "./VendasModal";
+import { getVendas } from "./vendasService";
 
 export default function VendasPage() {
   const [vendas, setVendas] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editData, setEditData] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [vendaEdit, setVendaEdit] = useState(null);
 
-  const fetchData = async () => {
-    const { data } = await listarVendas();
-    setVendas(data);
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
-  const handleSave = async (data) => {
-    if (data.id) await atualizarVenda(data.id, data);
-    else await criarVenda(data);
-    setModalOpen(false);
-    setEditData(null);
-    fetchData();
-  };
-
-  const handleEdit = (item) => {
-    setEditData(item);
-    setModalOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Confirmar exclusão?')) {
-      await removerVenda(id);
-      fetchData();
+  useEffect(() => {
+    async function fetchData() {
+      const data = await getVendas();
+      setVendas(data);
     }
-  };
+    fetchData();
+  }, []);
+
+  const colunas = [
+    { key: "cliente_nome", label: "Cliente" },
+    { key: "data", label: "Data" },
+    { key: "valor_total", label: "Valor Total" },
+    { key: "status", label: "Status" },
+    {
+      key: "acoes",
+      label: "Ações",
+      render: (item) => (
+        <div>
+          <button
+            className="mr-2 text-blue-600 hover:underline"
+            onClick={() => {
+              setVendaEdit(item);
+              setShowModal(true);
+            }}
+          >
+            Detalhes
+          </button>
+          <button className="text-red-600 hover:underline">Excluir</button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Vendas</h2>
-      <button className="btn btn-primary mb-2" onClick={() => { setEditData(null); setModalOpen(true); }}>
-        Nova Venda
-      </button>
-      <table className="min-w-full bg-white rounded-xl shadow">
-        <thead>
-          <tr>
-            <th className="p-2">Cliente</th>
-            <th className="p-2">Usuário</th>
-            <th className="p-2">Valor Total</th>
-            <th className="p-2">Status</th>
-            <th className="p-2">Data</th>
-            <th className="p-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {vendas.map((v) => (
-            <tr key={v.id}>
-              <td className="p-2">{v.cliente_id}</td>
-              <td className="p-2">{v.usuario_id}</td>
-              <td className="p-2">R$ {v.valor_total}</td>
-              <td className="p-2">{v.status}</td>
-              <td className="p-2">{v.data && v.data.split('T')[0]}</td>
-              <td className="p-2 flex gap-2">
-                <button onClick={() => handleEdit(v)} className="btn btn-sm btn-outline">Editar</button>
-                <button onClick={() => handleDelete(v.id)} className="btn btn-sm btn-danger">Excluir</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {modalOpen && (
-        <VendaModal
-          data={editData}
-          onClose={() => setModalOpen(false)}
-          onSave={handleSave}
-        />
-      )}
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Vendas</h1>
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
+              onClick={() => {
+                setVendaEdit(null);
+                setShowModal(true);
+              }}
+            >
+              Nova Venda
+            </button>
+          </div>
+          <TableGeneric
+            colunas={colunas}
+            dados={vendas}
+            vazio="Nenhuma venda cadastrada."
+          />
+          <VendasModal
+            open={showModal}
+            setOpen={setShowModal}
+            venda={vendaEdit}
+          />
+        </main>
+      </div>
     </div>
   );
 }

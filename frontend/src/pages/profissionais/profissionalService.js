@@ -1,16 +1,17 @@
-import axios from 'axios';
+// /frontend/src/pages/profissionais/profissionaisService.js
+import axios from "axios";
 
-const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL + '/profissionais',
-});
+// Função para listar profissionais
+export async function getProfissionais() {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get("/api/profissionais", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    return [];
+  }
+}
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers['Authorization'] = `Bearer ${token}`;
-  return config;
-});
-
-export const listarProfissionais = () => API.get('/');
-export const criarProfissional = (data) => API.post('/', data);
-export const atualizarProfissional = (id, data) => API.put(`/${id}`, data);
-export const removerProfissional = (id) => API.delete(`/${id}`);
+// Adicione funções para criar, editar, excluir profissionais

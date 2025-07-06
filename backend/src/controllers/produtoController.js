@@ -1,26 +1,37 @@
-const Produto = require('../models/produtoModel');
+const db = require('../config/db');
 
+// Listar produtos
 exports.listar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  const lista = await Produto.listar(empresa_id);
-  res.json(lista);
+  const [produtos] = await db.query(
+    'SELECT id, empresa_id, nome, categoria, unidade, preco_custo, preco_venda, estoque, observacoes, created_at FROM produtos'
+  );
+  res.json(produtos);
 };
 
+// Criar produto
 exports.criar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  const data = { ...req.body, empresa_id };
-  const produto = await Produto.criar(data);
-  res.status(201).json(produto);
+  const { empresa_id, nome, categoria, unidade, preco_custo, preco_venda, estoque, observacoes } = req.body;
+  await db.query(
+    'INSERT INTO produtos (empresa_id, nome, categoria, unidade, preco_custo, preco_venda, estoque, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [empresa_id, nome, categoria, unidade, preco_custo, preco_venda, estoque, observacoes]
+  );
+  res.status(201).json({ mensagem: "Produto cadastrado com sucesso!" });
 };
 
+// Atualizar produto
 exports.atualizar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  await Produto.atualizar(req.params.id, empresa_id, req.body);
-  res.status(204).send();
+  const { id } = req.params;
+  const { empresa_id, nome, categoria, unidade, preco_custo, preco_venda, estoque, observacoes } = req.body;
+  await db.query(
+    'UPDATE produtos SET empresa_id=?, nome=?, categoria=?, unidade=?, preco_custo=?, preco_venda=?, estoque=?, observacoes=? WHERE id=?',
+    [empresa_id, nome, categoria, unidade, preco_custo, preco_venda, estoque, observacoes, id]
+  );
+  res.json({ mensagem: "Produto atualizado com sucesso!" });
 };
 
-exports.remover = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  await Produto.remover(req.params.id, empresa_id);
-  res.status(204).send();
+// Excluir produto
+exports.deletar = async (req, res) => {
+  const { id } = req.params;
+  await db.query('DELETE FROM produtos WHERE id=?', [id]);
+  res.json({ mensagem: "Produto excluído com sucesso!" });
 };

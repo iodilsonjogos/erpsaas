@@ -1,16 +1,17 @@
-import axios from 'axios';
+// /frontend/src/pages/financeiro/financeiroService.js
+import axios from "axios";
 
-const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL + '/financeiro',
-});
+// Função para listar lançamentos financeiros
+export async function getLancamentos() {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get("/api/financeiro", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    return [];
+  }
+}
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers['Authorization'] = `Bearer ${token}`;
-  return config;
-});
-
-export const listarLancamentos = () => API.get('/');
-export const criarLancamento = (data) => API.post('/', data);
-export const atualizarLancamento = (id, data) => API.put(`/${id}`, data);
-export const removerLancamento = (id) => API.delete(`/${id}`);
+// Adicione funções para criar, editar, excluir lançamentos

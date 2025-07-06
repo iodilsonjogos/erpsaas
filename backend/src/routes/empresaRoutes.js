@@ -1,29 +1,36 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewares/auth');
 const empresaCtrl = require('../controllers/empresaController');
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const auth = require('../middlewares/auth');
+const acl = require('../middlewares/acl');
+
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Empresa
+ *     description: Configurações da empresa (multiempresa)
+ */
 
 /**
  * @swagger
  * /config/empresa:
  *   get:
- *     summary: Dados da empresa logada
+ *     summary: Buscar configurações da empresa logada
  *     tags: [Empresa]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Dados da empresa
+ *         description: Dados de configuração da empresa
  */
-router.get('/', auth(), empresaCtrl.getEmpresa);
+router.get('/', auth, acl(['admin']), empresaCtrl.get);
 
 /**
  * @swagger
  * /config/empresa:
  *   put:
- *     summary: Atualiza dados da empresa logada
+ *     summary: Atualizar configurações da empresa logada
  *     tags: [Empresa]
  *     security:
  *       - bearerAuth: []
@@ -32,13 +39,46 @@ router.get('/', auth(), empresaCtrl.getEmpresa);
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Empresa'
+ *             type: object
+ *             properties:
+ *               nome: { type: string }
+ *               cnpj: { type: string }
+ *               email: { type: string }
+ *               telefone: { type: string }
+ *               endereco: { type: string }
+ *               confirmacao_agendamento: { type: string, enum: [manual, automatica] }
+ *               permite_upsell: { type: integer, enum: [0, 1] }
+ *               confirmacao_baixa: { type: string, enum: [profissional, recepcao, ambos] }
+ *               tipo_comissao: { type: string, enum: [fixa, percentual] }
+ *               valor_comissao: { type: number }
  *     responses:
- *       204:
- *         description: Empresa atualizada
+ *       200:
+ *         description: Empresa atualizada com sucesso
  */
-router.put('/', auth(['admin']), empresaCtrl.atualizarEmpresa);
+router.put('/', auth, acl(['admin']), empresaCtrl.update);
 
-router.post('/upload-logo', auth(['admin']), upload.single('logo'), empresaCtrl.uploadLogo);
+/**
+ * @swagger
+ * /config/empresa/upload-logo:
+ *   post:
+ *     summary: Upload do logo da empresa
+ *     tags: [Empresa]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               logo:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Logo atualizada com sucesso
+ */
+router.post('/upload-logo', auth, empresaCtrl.uploadLogo);
 
 module.exports = router;

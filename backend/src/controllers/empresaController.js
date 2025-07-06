@@ -1,21 +1,68 @@
-const Empresa = require('../models/empresaModel');
+const db = require('../config/db');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
-exports.getEmpresa = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  const empresa = await Empresa.getById(empresa_id);
-  res.json(empresa);
+// Upload de logo (arquivo imagem)
+const upload = multer({
+  dest: 'uploads/',
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
+      return cb(new Error('Apenas imagens .png, .jpg, .jpeg são permitidas'));
+    }
+    cb(null, true);
+  }
+});
+
+// Listar empresa logada
+exports.get = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT id, nome, cnpj, email, telefone, endereco, logo, confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao FROM empresas WHERE id = ?',
+      [req.user.empresa_id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ message: 'Empresa não encontrada' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar configuração', error: error.message });
+  }
 };
 
-exports.atualizarEmpresa = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  await Empresa.atualizar(empresa_id, req.body);
-  res.status(204).send();
+// Atualizar empresa logada
+exports.update = async (req, res) => {
+  try {
+    const { nome, cnpj, email, telefone, endereco, confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao } = req.body;
+    await db.query(
+      `UPDATE empresas SET 
+        nome = ?, cnpj = ?, email = ?, telefone = ?, endereco = ?, 
+        confirmacao_agendamento = ?, permite_upsell = ?, confirmacao_baixa = ?, tipo_comissao = ?, valor_comissao = ?
+      WHERE id = ?`,
+      [nome, cnpj, email, telefone, endereco, confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao, req.user.empresa_id]
+    );
+    res.json({ message: 'Configuração da empresa atualizada com sucesso!' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao atualizar configuração', error: error.message });
+  }
 };
 
-exports.uploadLogo = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  // Salve o caminho do arquivo no banco
-  const logoPath = '/uploads/' + req.file.filename;
-  await db.query('UPDATE empresas SET logo=? WHERE id=?', [logoPath, empresa_id]);
-  res.json({ logo: logoPath });
-};
+// Upload de logo da empresa
+exports.uploadLogo = [
+  upload.single('logo'),
+  async (req, res) => {
+    const empresa_id = req.user.empresa_id;
+    if (!req.file) return res.status(400).json({ erro: 'Arquivo não enviado!' });
+
+    // Move o arquivo para a pasta "uploads/logo_empresa_<id>.ext"
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const filename = `logo_empresa_${empresa_id}${ext}`;
+    const finalPath = path.join('uploads', filename);
+
+    fs.renameSync(req.file.path, finalPath);
+    await db.query(`UPDATE empresas SET logo=? WHERE id=?`, [finalPath, empresa_id]);
+
+    res.json({ mensagem: 'Logo atualizada com sucesso!', logo: finalPath });
+  }
+];

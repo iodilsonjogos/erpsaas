@@ -1,16 +1,17 @@
-import axios from 'axios';
+// /frontend/src/pages/agenda/agendaService.js
+import axios from "axios";
 
-const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000/api/agenda',
-});
+// Função para listar agendamentos
+export async function getAgendamentos() {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get("/api/agenda", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    return [];
+  }
+}
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers['Authorization'] = `Bearer ${token}`;
-  return config;
-});
-
-export const listarAgendamentos = () => API.get('/');
-export const criarAgendamento = (data) => API.post('/', data);
-export const atualizarAgendamento = (id, data) => API.put(`/${id}`, data);
-export const removerAgendamento = (id) => API.delete(`/${id}`);
+// Adicione funções para criar, editar, excluir agendamento aqui

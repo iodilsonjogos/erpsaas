@@ -1,36 +1,97 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import FormInput from "../../components/FormInput";
 
-export default function ServicoModal({ data, onClose, onSave }) {
-  const [form, setForm] = useState(data || {
-    nome: '', preco: '', duracao_minutos: ''
+/**
+ * Modal para criar ou editar serviço.
+ * Props: open (boolean), setOpen (função), servico (objeto ou null)
+ */
+export default function ServicosModal({ open, setOpen, servico }) {
+  const [form, setForm] = useState({
+    nome: "",
+    categoria: "",
+    preco: "",
+    duracao: "",
+    ativo: true,
   });
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  useEffect(() => {
+    if (servico) setForm(servico);
+    else setForm({ nome: "", categoria: "", preco: "", duracao: "", ativo: true });
+  }, [servico, open]);
 
-  const handleSubmit = e => {
+  if (!open) return null;
+
+  function handleChange(e) {
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+  }
+
+  function handleSubmit(e) {
     e.preventDefault();
-    onSave(form);
-  };
+    // Aqui vai lógica de salvar ou editar (chamar serviço)
+    setOpen(false);
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <form className="bg-white rounded-2xl p-6 shadow-xl min-w-[340px]" onSubmit={handleSubmit}>
-        <h3 className="font-bold text-lg mb-4">{form.id ? "Editar" : "Novo"} Serviço</h3>
-        <div className="mb-2">
-          <label>Nome</label>
-          <input type="text" name="nome" className="input input-bordered w-full" value={form.nome} onChange={handleChange} required />
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <form
+        className="bg-white p-6 rounded-xl shadow-lg min-w-[340px]"
+        onSubmit={handleSubmit}
+      >
+        <h2 className="text-lg font-bold mb-3">
+          {servico ? "Editar Serviço" : "Novo Serviço"}
+        </h2>
+        <FormInput
+          label="Nome"
+          name="nome"
+          value={form.nome}
+          onChange={handleChange}
+          required
+        />
+        <FormInput
+          label="Categoria"
+          name="categoria"
+          value={form.category}
+          onChange={handleChange}
+        />
+        <FormInput
+          label="Preço"
+          name="preco"
+          type="number"
+          value={form.preco}
+          onChange={handleChange}
+        />
+        <FormInput
+          label="Duração (min)"
+          name="duracao"
+          type="number"
+          value={form.duracao}
+          onChange={handleChange}
+        />
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="ativo"
+            checked={form.ativo}
+            onChange={handleChange}
+            id="ativo"
+          />
+          <label htmlFor="ativo">Ativo</label>
         </div>
-        <div className="mb-2">
-          <label>Preço</label>
-          <input type="number" name="preco" step="0.01" className="input input-bordered w-full" value={form.preco} onChange={handleChange} required />
-        </div>
-        <div className="mb-2">
-          <label>Duração (min)</label>
-          <input type="number" name="duracao_minutos" className="input input-bordered w-full" value={form.duracao_minutos} onChange={handleChange} />
-        </div>
-        <div className="flex gap-2 mt-4">
-          <button type="submit" className="btn btn-primary">Salvar</button>
-          <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            type="button"
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            onClick={() => setOpen(false)}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Salvar
+          </button>
         </div>
       </form>
     </div>

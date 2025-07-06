@@ -1,16 +1,17 @@
-import axios from 'axios';
+// /frontend/src/pages/produtos/produtosService.js
+import axios from "axios";
 
-const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL + '/produtos',
-});
+// Função para listar produtos
+export async function getProdutos() {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get("/api/produtos", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    return [];
+  }
+}
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers['Authorization'] = `Bearer ${token}`;
-  return config;
-});
-
-export const listarProdutos = () => API.get('/');
-export const criarProduto = (data) => API.post('/', data);
-export const atualizarProduto = (id, data) => API.put(`/${id}`, data);
-export const removerProduto = (id) => API.delete(`/${id}`);
+// Adicione funções para criar, editar, excluir produtos

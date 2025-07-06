@@ -1,88 +1,80 @@
-import React, { useEffect, useState } from 'react';
-import { listarLancamentos, criarLancamento, atualizarLancamento, removerLancamento } from './financeiroService';
-import FinanceiroModal from './FinanceiroModal';
+import React, { useState, useEffect } from "react";
+import Sidebar from "../../components/Sidebar";
+import Header from "../../components/Header";
+import TableGeneric from "../../components/TableGeneric";
+import FinanceiroModal from "./FinanceiroModal";
+import { getLancamentos } from "./financeiroService";
 
 export default function FinanceiroPage() {
   const [lancamentos, setLancamentos] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editData, setEditData] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [lancamentoEdit, setLancamentoEdit] = useState(null);
 
-  const fetchData = async () => {
-    const { data } = await listarLancamentos();
-    setLancamentos(data);
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
-  const handleSave = async (data) => {
-    if (data.id) await atualizarLancamento(data.id, data);
-    else await criarLancamento(data);
-    setModalOpen(false);
-    setEditData(null);
-    fetchData();
-  };
-
-  const handleEdit = (item) => {
-    setEditData(item);
-    setModalOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Confirmar exclusão?')) {
-      await removerLancamento(id);
-      fetchData();
+  useEffect(() => {
+    async function fetchData() {
+      const data = await getLancamentos();
+      setLancamentos(data);
     }
-  };
+    fetchData();
+  }, []);
 
-  // Cálculo de saldo
-  const saldo = lancamentos.reduce((acc, l) =>
-    l.tipo === 'entrada' ? acc + Number(l.valor) : acc - Number(l.valor), 0);
+  const colunas = [
+    { key: "data", label: "Data" },
+    { key: "tipo", label: "Tipo" },
+    { key: "descricao", label: "Descrição" },
+    { key: "valor", label: "Valor" },
+    { key: "categoria", label: "Categoria" },
+    { key: "status", label: "Status" },
+    {
+      key: "acoes",
+      label: "Ações",
+      render: (item) => (
+        <div>
+          <button
+            className="mr-2 text-blue-600 hover:underline"
+            onClick={() => {
+              setLancamentoEdit(item);
+              setShowModal(true);
+            }}
+          >
+            Editar
+          </button>
+          <button className="text-red-600 hover:underline">Excluir</button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Financeiro (Fluxo de Caixa)</h2>
-      <div className="mb-4 font-bold text-lg">
-        Saldo Atual: <span className={saldo >= 0 ? 'text-green-600' : 'text-red-600'}>R$ {saldo.toFixed(2)}</span>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Financeiro</h1>
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
+              onClick={() => {
+                setLancamentoEdit(null);
+                setShowModal(true);
+              }}
+            >
+              Novo Lançamento
+            </button>
+          </div>
+          <TableGeneric
+            colunas={colunas}
+            dados={lancamentos}
+            vazio="Nenhum lançamento financeiro cadastrado."
+          />
+          <FinanceiroModal
+            open={showModal}
+            setOpen={setShowModal}
+            lancamento={lancamentoEdit}
+          />
+        </main>
       </div>
-      <button className="btn btn-primary mb-2" onClick={() => { setEditData(null); setModalOpen(true); }}>
-        Novo Lançamento
-      </button>
-      <table className="min-w-full bg-white rounded-xl shadow">
-        <thead>
-          <tr>
-            <th className="p-2">Data</th>
-            <th className="p-2">Tipo</th>
-            <th className="p-2">Descrição</th>
-            <th className="p-2">Categoria</th>
-            <th className="p-2">Valor</th>
-            <th className="p-2">Forma Pgto</th>
-            <th className="p-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lancamentos.map((l) => (
-            <tr key={l.id}>
-              <td className="p-2">{l.data}</td>
-              <td className={`p-2 ${l.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>{l.tipo}</td>
-              <td className="p-2">{l.descricao}</td>
-              <td className="p-2">{l.categoria}</td>
-              <td className="p-2">R$ {l.valor}</td>
-              <td className="p-2">{l.forma_pagamento}</td>
-              <td className="p-2 flex gap-2">
-                <button onClick={() => handleEdit(l)} className="btn btn-sm btn-outline">Editar</button>
-                <button onClick={() => handleDelete(l.id)} className="btn btn-sm btn-danger">Excluir</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {modalOpen && (
-        <FinanceiroModal
-          data={editData}
-          onClose={() => setModalOpen(false)}
-          onSave={handleSave}
-        />
-      )}
     </div>
   );
 }

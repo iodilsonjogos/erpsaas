@@ -1,26 +1,75 @@
-const Cliente = require('../models/clienteModel');
+// /backend/src/controllers/clienteController.js
+const db = require('../config/db');
 
 exports.listar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  const lista = await Cliente.listar(empresa_id);
-  res.json(lista);
+  try {
+    const [clientes] = await db.query(
+      'SELECT id, empresa_id, nome, telefone, email, observacoes, created_at FROM clientes WHERE empresa_id = ?',
+      [req.user.empresa_id]
+    );
+    res.json(clientes);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao listar clientes', error: error.message });
+  }
+};
+
+exports.detalhar = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT id, empresa_id, nome, telefone, email, observacoes, created_at FROM clientes WHERE id = ? AND empresa_id = ? LIMIT 1',
+      [req.params.id, req.user.empresa_id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ message: 'Cliente não encontrado' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao detalhar cliente', error: error.message });
+  }
 };
 
 exports.criar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  const data = { ...req.body, empresa_id };
-  const cliente = await Cliente.criar(data);
-  res.status(201).json(cliente);
+  try {
+    const { nome, telefone, email, observacoes } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO clientes (empresa_id, nome, telefone, email, observacoes) VALUES (?, ?, ?, ?, ?)',
+      [req.user.empresa_id, nome, telefone, email, observacoes]
+    );
+    res.status(201).json({ id: result.insertId, nome, telefone, email, observacoes });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao cadastrar cliente', error: error.message });
+  }
 };
 
 exports.atualizar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  await Cliente.atualizar(req.params.id, empresa_id, req.body);
-  res.status(204).send();
+  try {
+    const { nome, telefone, email, observacoes } = req.body;
+    const { id } = req.params;
+    const [result] = await db.query(
+      'UPDATE clientes SET nome=?, telefone=?, email=?, observacoes=? WHERE id=? AND empresa_id=?',
+      [nome, telefone, email, observacoes, id, req.user.empresa_id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Cliente não encontrado' });
+    }
+    res.json({ mensagem: "Cliente atualizado com sucesso!" });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao atualizar cliente', error: error.message });
+  }
 };
 
-exports.remover = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  await Cliente.remover(req.params.id, empresa_id);
-  res.status(204).send();
+exports.deletar = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await db.query(
+      'DELETE FROM clientes WHERE id=? AND empresa_id=?',
+      [id, req.user.empresa_id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Cliente não encontrado' });
+    }
+    res.json({ mensagem: "Cliente excluído com sucesso!" });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao excluir cliente', error: error.message });
+  }
 };

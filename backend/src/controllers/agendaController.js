@@ -1,26 +1,38 @@
-const Agenda = require('../models/agendaModel');
+const db = require('../config/db');
 
+// Listar agendamentos
 exports.listar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  const lista = await Agenda.listar(empresa_id);
-  res.json(lista);
+  const [agendas] = await db.query(
+    `SELECT id, empresa_id, cliente_id, profissional_id, servico_id, data, hora, status, observacoes, created_at FROM agenda`
+  );
+  res.json(agendas);
 };
 
+// Criar agendamento
 exports.criar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  const data = { ...req.body, empresa_id, usuario_id: req.user.id };
-  const agenda = await Agenda.criar(data);
-  res.status(201).json(agenda);
+  const { empresa_id, cliente_id, profissional_id, servico_id, data, hora, status, observacoes } = req.body;
+  await db.query(
+    `INSERT INTO agenda (empresa_id, cliente_id, profissional_id, servico_id, data, hora, status, observacoes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [empresa_id, cliente_id, profissional_id, servico_id, data, hora, status, observacoes]
+  );
+  res.status(201).json({ mensagem: "Agendamento criado com sucesso!" });
 };
 
+// Atualizar agendamento
 exports.atualizar = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  await Agenda.atualizar(req.params.id, empresa_id, req.body);
-  res.status(204).send();
+  const { id } = req.params;
+  const { empresa_id, cliente_id, profissional_id, servico_id, data, hora, status, observacoes } = req.body;
+  await db.query(
+    `UPDATE agenda SET empresa_id=?, cliente_id=?, profissional_id=?, servico_id=?, data=?, hora=?, status=?, observacoes=? WHERE id=?`,
+    [empresa_id, cliente_id, profissional_id, servico_id, data, hora, status, observacoes, id]
+  );
+  res.json({ mensagem: "Agendamento atualizado com sucesso!" });
 };
 
-exports.remover = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  await Agenda.remover(req.params.id, empresa_id);
-  res.status(204).send();
+// Excluir agendamento
+exports.deletar = async (req, res) => {
+  const { id } = req.params;
+  await db.query(`DELETE FROM agenda WHERE id=?`, [id]);
+  res.json({ mensagem: "Agendamento excluído com sucesso!" });
 };

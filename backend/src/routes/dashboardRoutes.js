@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/auth');
+const acl = require('../middlewares/acl');
 const dashboardCtrl = require('../controllers/dashboardController');
 
 /**
@@ -15,8 +16,8 @@ const dashboardCtrl = require('../controllers/dashboardController');
  *       200:
  *         description: Retorna indicadores do dashboard
  */
-router.get('/', auth(['admin']), dashboardCtrl.resumo);
-router.get('/vendas-mes', auth(['admin']), dashboardCtrl.vendasPorMes);
-router.get('/produtos-top', auth(['admin']), dashboardCtrl.produtosMaisVendidos);
+router.get('/', auth, acl(['admin']), dashboardCtrl.resumo);
+router.get('/vendas-mes', auth, acl(['admin']), dashboardCtrl.vendasPorMes);
+router.get('/produtos-top', auth, acl(['admin']), dashboardCtrl.produtosMaisVendidos);
 
 module.exports = router;

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/auth');
 const usuarioCtrl = require('../controllers/usuarioController');
-
+const acl = require('../middlewares/acl');
 
 /**
  * @swagger
@@ -82,7 +82,7 @@ router.post('/login', usuarioCtrl.login);
  *               items:
  *                 $ref: '#/components/schemas/Usuario'
  */
-router.get('/', auth(['admin']), usuarioCtrl.listar);
+router.get('/', auth, acl(['admin']), usuarioCtrl.listar);
 /**
  * @swagger
  * /usuarios:
@@ -101,7 +101,7 @@ router.get('/', auth(['admin']), usuarioCtrl.listar);
  *       201:
  *         description: Usuário criado com sucesso
  */
-router.post('/', auth(['admin']), usuarioCtrl.criar);
+router.post('/', auth, acl(['admin']), usuarioCtrl.criar);
 /**
  * @swagger
  * /usuarios/{id}:
@@ -127,7 +127,7 @@ router.post('/', auth(['admin']), usuarioCtrl.criar);
  *       200:
  *         description: Usuário atualizado com sucesso
  */
-router.put('/:id', auth(['admin']), usuarioCtrl.atualizar);
+router.put('/:id', auth, acl(['admin']), usuarioCtrl.atualizar);
 /**
  * @swagger
  * /usuarios/{id}:
@@ -147,6 +147,6 @@ router.put('/:id', auth(['admin']), usuarioCtrl.atualizar);
  *       200:
  *         description: Usuário excluído com sucesso
  */
-router.delete('/:id', auth(['admin']), usuarioCtrl.deletar);
+router.delete('/:id', auth, acl(['admin']), usuarioCtrl.deletar);
 
 module.exports = router;

@@ -1,81 +1,80 @@
-import React, { useEffect, useState } from 'react';
-import { listarAgendamentos, criarAgendamento, atualizarAgendamento, removerAgendamento } from './agendaService';
-import AgendaModal from './AgendaModal';
+import React, { useState, useEffect } from "react";
+import Sidebar from "../../components/Sidebar";
+import Header from "../../components/Header";
+import TableGeneric from "../../components/TableGeneric";
+import AgendaModal from "./AgendaModal";
+import { getAgendamentos } from "./agendaService";
 
 export default function AgendaPage() {
-  const [agendas, setAgendas] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editData, setEditData] = useState(null);
+  const [agendamentos, setAgendamentos] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [agendamentoEdit, setAgendamentoEdit] = useState(null);
 
-  const fetchData = async () => {
-    const { data } = await listarAgendamentos();
-    setAgendas(data);
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
-  const handleSave = async (data) => {
-    if (data.id) await atualizarAgendamento(data.id, data);
-    else await criarAgendamento(data);
-    setModalOpen(false);
-    setEditData(null);
-    fetchData();
-  };
-
-  const handleEdit = (item) => {
-    setEditData(item);
-    setModalOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Confirmar exclusão?')) {
-      await removerAgendamento(id);
-      fetchData();
+  useEffect(() => {
+    async function fetchData() {
+      const data = await getAgendamentos();
+      setAgendamentos(data);
     }
-  };
+    fetchData();
+  }, []);
+
+  const colunas = [
+    { key: "cliente_nome", label: "Cliente" },
+    { key: "profissional_nome", label: "Profissional" },
+    { key: "servico_nome", label: "Serviço" },
+    { key: "data", label: "Data" },
+    { key: "hora", label: "Hora" },
+    { key: "status", label: "Status" },
+    {
+      key: "acoes",
+      label: "Ações",
+      render: (item) => (
+        <div>
+          <button
+            className="mr-2 text-blue-600 hover:underline"
+            onClick={() => {
+              setAgendamentoEdit(item);
+              setShowModal(true);
+            }}
+          >
+            Editar
+          </button>
+          <button className="text-red-600 hover:underline">Excluir</button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Agenda</h2>
-      <button className="btn btn-primary mb-2" onClick={() => { setEditData(null); setModalOpen(true); }}>
-        Novo Agendamento
-      </button>
-      <table className="min-w-full bg-white rounded-xl shadow">
-        <thead>
-          <tr>
-            <th className="p-2">Data</th>
-            <th className="p-2">Hora</th>
-            <th className="p-2">Cliente</th>
-            <th className="p-2">Profissional</th>
-            <th className="p-2">Serviço</th>
-            <th className="p-2">Valor</th>
-            <th className="p-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {agendas.map((a) => (
-            <tr key={a.id}>
-              <td className="p-2">{a.data}</td>
-              <td className="p-2">{a.hora}</td>
-              <td className="p-2">{a.cliente_id}</td>
-              <td className="p-2">{a.profissional_id}</td>
-              <td className="p-2">{a.servico}</td>
-              <td className="p-2">{a.valor}</td>
-              <td className="p-2 flex gap-2">
-                <button onClick={() => handleEdit(a)} className="btn btn-sm btn-outline">Editar</button>
-                <button onClick={() => handleDelete(a.id)} className="btn btn-sm btn-danger">Excluir</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {modalOpen && (
-        <AgendaModal
-          data={editData}
-          onClose={() => setModalOpen(false)}
-          onSave={handleSave}
-        />
-      )}
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Agenda</h1>
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
+              onClick={() => {
+                setAgendamentoEdit(null);
+                setShowModal(true);
+              }}
+            >
+              Novo Agendamento
+            </button>
+          </div>
+          <TableGeneric
+            colunas={colunas}
+            dados={agendamentos}
+            vazio="Nenhum agendamento cadastrado."
+          />
+          <AgendaModal
+            open={showModal}
+            setOpen={setShowModal}
+            agendamento={agendamentoEdit}
+          />
+        </main>
+      </div>
     </div>
   );
 }

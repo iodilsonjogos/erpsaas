@@ -19,8 +19,11 @@ app.use('/api/produtos', require('./routes/produtoRoutes'));
 app.use('/api/financeiro', require('./routes/financeiroRoutes'));
 app.use('/api/relatorios', require('./routes/relatorioRoutes'));
 app.use('/api/config/empresa', require('./routes/empresaRoutes'));
+app.use('/uploads', express.static('uploads'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
+app.use('/api/agendamento-online', require('./routes/agendamentoOnlineRoutes'));
+
 
 // Healthcheck
 app.get('/', (req, res) => res.send('ERP SaaS API rodando!'));
@@ -31,5 +34,4 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 }
 
-app.use('/uploads', express.static('uploads'));
 module.exports = app;
