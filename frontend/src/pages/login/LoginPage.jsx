@@ -1,60 +1,68 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { login } from "./loginService";
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage() {
   const [form, setForm] = useState({ email: "", senha: "" });
+  const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setErro("");
-    try {
-      const res = await axios.post(
-        process.env.REACT_APP_API_URL + "/usuarios/login",
-        form
-      );
-      localStorage.setItem("token", res.data.token);
-      if (onLogin) onLogin(); // Para redirecionar se quiser
-      window.location.href = "/"; // Redireciona para dashboard
-    } catch (err) {
-      setErro("Usuário ou senha inválidos!");
-    }
-  }
+  const [logado, setLogado] = useState(false);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErro("");
+    setLoading(true);
+    try {
+      const res = await login(form.email, form.senha);
+      localStorage.setItem("token", res.token);
+      setLogado(true);
+      // Redirecionar para a rota principal do sistema após login:
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 500);
+    } catch (err) {
+      setErro("Usuário ou senha inválidos.");
+    }
+    setLoading(false);
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
-        <h2 className="text-xl mb-4 font-bold">Login ERP SaaS</h2>
-        <label htmlFor="email">E-mail:</label>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-300">
+      <form
+        className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md"
+        onSubmit={handleSubmit}
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">Acesse o sistema</h2>
         <input
-          name="email"
           type="email"
-          placeholder="E-mail"
-          className="border p-2 mb-2 w-full rounded"
+          name="email"
+          className="border rounded p-3 w-full mb-3"
+          placeholder="Seu e-mail"
           value={form.email}
           onChange={handleChange}
           required
         />
         <input
-          name="senha"
           type="password"
-          placeholder="Senha"
-          className="border p-2 mb-4 w-full rounded"
+          name="senha"
+          className="border rounded p-3 w-full mb-3"
+          placeholder="Sua senha"
           value={form.senha}
           onChange={handleChange}
           required
         />
+        {erro && <div className="mb-3 text-red-700 text-center">{erro}</div>}
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded font-bold"
+          className="w-full bg-blue-700 text-white font-bold py-3 rounded mt-2"
+          disabled={loading}
         >
-          Entrar
+          {loading ? "Entrando..." : "Entrar"}
         </button>
-        {erro && <div className="text-red-600 mt-2">{erro}</div>}
+        {logado && <div className="text-green-700 text-center mt-3">Login realizado! Redirecionando...</div>}
       </form>
     </div>
   );

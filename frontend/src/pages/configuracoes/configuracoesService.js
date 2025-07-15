@@ -1,11 +1,12 @@
 // /frontend/src/pages/configuracoes/configuracoesService.js
 import axios from "axios";
+const api = process.env.REACT_APP_API_URL;
 
-// Função para buscar as configurações da empresa
+// Buscar configurações da empresa
 export async function getConfiguracoes() {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("/api/config/empresa", {
+    const response = await axios.get(`${api}/config/empresa`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -14,4 +15,10 @@ export async function getConfiguracoes() {
   }
 }
 
-// Adicione função para salvar (PUT) configurações se desejar.
+// Salvar (atualizar) configurações da empresa
+export async function salvarConfiguracoes(data) {
+  const token = localStorage.getItem("token");
+  return axios.put(`${api}/config/empresa`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}

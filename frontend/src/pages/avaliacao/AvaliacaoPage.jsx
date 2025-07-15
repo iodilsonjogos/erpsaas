@@ -3,19 +3,20 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import AvaliacaoModal from "./AvaliacaoModal";
-import { getAvaliacoes } from "./avaliacaoService";
+import { getAvaliacoes, excluirAvaliacao } from "./avaliacaoService";
 
 export default function AvaliacaoPage() {
   const [avaliacoes, setAvaliacoes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [avaliacaoEdit, setAvaliacaoEdit] = useState(null);
 
+  async function loadAvaliacoes() {
+    const data = await getAvaliacoes();
+    setAvaliacoes(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getAvaliacoes();
-      setAvaliacoes(data);
-    }
-    fetchData();
+    loadAvaliacoes();
   }, []);
 
   const colunas = [
@@ -24,7 +25,7 @@ export default function AvaliacaoPage() {
     { key: "servico", label: "Serviço" },
     { key: "nota", label: "Nota" },
     { key: "comentario", label: "Comentário" },
-    { key: "data", label: "Data" },
+    { key: "data", label: "Data", render: (item) => item.data ? item.data.split("T")[0] : "" },
     {
       key: "acoes",
       label: "Ações",
@@ -37,9 +38,19 @@ export default function AvaliacaoPage() {
               setShowModal(true);
             }}
           >
-            Detalhes
+            Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirAvaliacao(item.id);
+                loadAvaliacoes();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -72,6 +83,7 @@ export default function AvaliacaoPage() {
             open={showModal}
             setOpen={setShowModal}
             avaliacao={avaliacaoEdit}
+            onRefresh={loadAvaliacoes}
           />
         </main>
       </div>

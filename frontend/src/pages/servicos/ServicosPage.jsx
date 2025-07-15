@@ -3,27 +3,28 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import ServicosModal from "./ServicosModal";
-import { getServicos } from "./servicosService";
+import { getServicos, excluirServico } from "./servicosService";
 
 export default function ServicosPage() {
   const [servicos, setServicos] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [servicoEdit, setServicoEdit] = useState(null);
 
+  async function loadServicos() {
+    const data = await getServicos();
+    setServicos(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getServicos();
-      setServicos(data);
-    }
-    fetchData();
+    loadServicos();
   }, []);
 
   const colunas = [
     { key: "nome", label: "Nome" },
     { key: "categoria", label: "Categoria" },
-    { key: "preco", label: "Preço" },
-    { key: "duracao", label: "Duração" },
-    { key: "ativo", label: "Status", render: (item) => item.ativo ? "Ativo" : "Inativo" },
+    { key: "preco", label: "Preço", render: (item) => "R$ " + Number(item.preco).toFixed(2) },
+    { key: "duracao", label: "Duração", render: (item) => item.duracao + " min" },
+    { key: "status", label: "Status", render: (item) => item.status ? "Ativo" : "Inativo" },
     {
       key: "acoes",
       label: "Ações",
@@ -38,7 +39,17 @@ export default function ServicosPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirServico(item.id);
+                loadServicos();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -71,6 +82,7 @@ export default function ServicosPage() {
             open={showModal}
             setOpen={setShowModal}
             servico={servicoEdit}
+            onRefresh={loadServicos}
           />
         </main>
       </div>

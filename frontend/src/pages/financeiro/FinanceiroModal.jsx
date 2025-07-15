@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarLancamento, editarLancamento } from "./financeiroService";
 
-/**
- * Modal para criar ou editar lançamento financeiro.
- * Props: open (boolean), setOpen (função), lancamento (objeto ou null)
- */
-export default function FinanceiroModal({ open, setOpen, lancamento }) {
+export default function FinanceiroModal({ open, setOpen, lancamento, onRefresh }) {
   const [form, setForm] = useState({
-    data: "",
     tipo: "Receita",
-    descricao: "",
-    valor: "",
     categoria: "",
-    status: "Pendente"
+    valor: "",
+    data: "",
+    observacao: ""
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (lancamento) setForm(lancamento);
+    if (lancamento)
+      setForm({
+        ...lancamento,
+        data: lancamento.data ? lancamento.data.split("T")[0] : ""
+      });
     else setForm({
-      data: "",
       tipo: "Receita",
-      descricao: "",
-      valor: "",
       categoria: "",
-      status: "Pendente"
+      valor: "",
+      data: "",
+      observacao: ""
     });
   }, [lancamento, open]);
 
@@ -33,10 +33,21 @@ export default function FinanceiroModal({ open, setOpen, lancamento }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar ou editar (chamar serviço)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (lancamento && lancamento.id) {
+        await editarLancamento(lancamento.id, form);
+      } else {
+        await criarLancamento(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar lançamento!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -48,31 +59,17 @@ export default function FinanceiroModal({ open, setOpen, lancamento }) {
         <h2 className="text-lg font-bold mb-3">
           {lancamento ? "Editar Lançamento" : "Novo Lançamento"}
         </h2>
-        <FormInput
-          label="Data"
-          name="data"
-          type="date"
-          value={form.data}
-          onChange={handleChange}
-          required
-        />
         <div className="mb-3">
           <label className="block mb-1">Tipo</label>
-          <select
-            className="w-full border rounded p-2"
-            name="tipo"
-            value={form.tipo}
-            onChange={handleChange}
-            required
-          >
+          <select className="w-full border rounded p-2" name="tipo" value={form.tipo} onChange={handleChange} required>
             <option value="Receita">Receita</option>
             <option value="Despesa">Despesa</option>
           </select>
         </div>
         <FormInput
-          label="Descrição"
-          name="descricao"
-          value={form.descricao}
+          label="Categoria"
+          name="categoria"
+          value={form.categoria || ""}
           onChange={handleChange}
           required
         />
@@ -80,44 +77,39 @@ export default function FinanceiroModal({ open, setOpen, lancamento }) {
           label="Valor"
           name="valor"
           type="number"
-          value={form.valor}
+          value={form.valor || ""}
           onChange={handleChange}
           required
         />
         <FormInput
-          label="Categoria"
-          name="categoria"
-          value={form.categoria}
+          label="Data"
+          name="data"
+          type="date"
+          value={form.data || ""}
           onChange={handleChange}
           required
         />
-        <div className="mb-3">
-          <label className="block mb-1">Status</label>
-          <select
-            className="w-full border rounded p-2"
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            required
-          >
-            <option value="Pendente">Pendente</option>
-            <option value="Pago">Pago</option>
-            <option value="Atrasado">Atrasado</option>
-          </select>
-        </div>
+        <FormInput
+          label="Observação"
+          name="observacao"
+          value={form.observacao || ""}
+          onChange={handleChange}
+        />
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

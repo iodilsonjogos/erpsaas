@@ -3,26 +3,27 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import AutomacaoModal from "./AutomacaoModal";
-import { getAutomacoes } from "./automacaoService";
+import { getAutomacoes, excluirAutomacao } from "./automacaoService";
 
 export default function AutomacaoPage() {
   const [automacoes, setAutomacoes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [automacaoEdit, setAutomacaoEdit] = useState(null);
 
+  async function loadAutomacoes() {
+    const data = await getAutomacoes();
+    setAutomacoes(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getAutomacoes();
-      setAutomacoes(data);
-    }
-    fetchData();
+    loadAutomacoes();
   }, []);
 
   const colunas = [
+    { key: "nome", label: "Nome" },
     { key: "tipo", label: "Tipo" },
+    { key: "destino", label: "Destino" },
     { key: "mensagem", label: "Mensagem" },
-    { key: "canal", label: "Canal" },
-    { key: "gatilho", label: "Gatilho" },
     { key: "ativo", label: "Ativo", render: (item) => item.ativo ? "Sim" : "Não" },
     {
       key: "acoes",
@@ -38,7 +39,17 @@ export default function AutomacaoPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirAutomacao(item.id);
+                loadAutomacoes();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -51,7 +62,7 @@ export default function AutomacaoPage() {
         <Header />
         <main className="flex-1 p-6 overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Automação de Mensagens</h1>
+            <h1 className="text-2xl font-bold">Automação</h1>
             <button
               className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
               onClick={() => {
@@ -65,12 +76,13 @@ export default function AutomacaoPage() {
           <TableGeneric
             colunas={colunas}
             dados={automacoes}
-            vazio="Nenhuma automação configurada."
+            vazio="Nenhuma automação cadastrada."
           />
           <AutomacaoModal
             open={showModal}
             setOpen={setShowModal}
             automacao={automacaoEdit}
+            onRefresh={loadAutomacoes}
           />
         </main>
       </div>

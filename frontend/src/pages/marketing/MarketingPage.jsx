@@ -3,27 +3,28 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import MarketingModal from "./MarketingModal";
-import { getCampanhas } from "./marketingService";
+import { getCampanhas, excluirCampanha } from "./marketingService";
 
 export default function MarketingPage() {
   const [campanhas, setCampanhas] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [campanhaEdit, setCampanhaEdit] = useState(null);
 
+  async function loadCampanhas() {
+    const data = await getCampanhas();
+    setCampanhas(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getCampanhas();
-      setCampanhas(data);
-    }
-    fetchData();
+    loadCampanhas();
   }, []);
 
   const colunas = [
     { key: "titulo", label: "Título" },
-    { key: "publico", label: "Público" },
-    { key: "canal", label: "Canal" },
+    { key: "tipo", label: "Tipo" },
+    { key: "publico", label: "Público Alvo" },
+    { key: "data_envio", label: "Envio", render: (item) => item.data_envio ? item.data_envio.split("T")[0] : "" },
     { key: "status", label: "Status" },
-    { key: "programada_para", label: "Agendada para" },
     {
       key: "acoes",
       label: "Ações",
@@ -38,7 +39,17 @@ export default function MarketingPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirCampanha(item.id);
+                loadCampanhas();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -65,12 +76,13 @@ export default function MarketingPage() {
           <TableGeneric
             colunas={colunas}
             dados={campanhas}
-            vazio="Nenhuma campanha cadastrada."
+            vazio="Nenhuma campanha registrada."
           />
           <MarketingModal
             open={showModal}
             setOpen={setShowModal}
             campanha={campanhaEdit}
+            onRefresh={loadCampanhas}
           />
         </main>
       </div>

@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarAgendamento, editarAgendamento } from "./agendaService";
 
-/**
- * Modal para criar ou editar agendamento.
- * Props: open (boolean), setOpen (função), agendamento (objeto ou null)
- */
-export default function AgendaModal({ open, setOpen, agendamento }) {
+export default function AgendaModal({ open, setOpen, agendamento, onRefresh }) {
   const [form, setForm] = useState({
     cliente_nome: "",
     profissional_nome: "",
@@ -14,10 +11,22 @@ export default function AgendaModal({ open, setOpen, agendamento }) {
     hora: "",
     status: "Pendente"
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (agendamento) setForm(agendamento);
-    else setForm({ cliente_nome: "", profissional_nome: "", servico_nome: "", data: "", hora: "", status: "Pendente" });
+    if (agendamento)
+      setForm({
+        ...agendamento,
+        data: agendamento.data ? agendamento.data.split("T")[0] : ""
+      });
+    else setForm({
+      cliente_nome: "",
+      profissional_nome: "",
+      servico_nome: "",
+      data: "",
+      hora: "",
+      status: "Pendente"
+    });
   }, [agendamento, open]);
 
   if (!open) return null;
@@ -26,10 +35,21 @@ export default function AgendaModal({ open, setOpen, agendamento }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar ou editar (chamar serviço)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (agendamento && agendamento.id) {
+        await editarAgendamento(agendamento.id, form);
+      } else {
+        await criarAgendamento(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar agendamento!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -44,21 +64,21 @@ export default function AgendaModal({ open, setOpen, agendamento }) {
         <FormInput
           label="Cliente"
           name="cliente_nome"
-          value={form.cliente_nome}
+          value={form.cliente_nome || ""}
           onChange={handleChange}
           required
         />
         <FormInput
           label="Profissional"
           name="profissional_nome"
-          value={form.profissional_nome}
+          value={form.profissional_nome || ""}
           onChange={handleChange}
           required
         />
         <FormInput
           label="Serviço"
           name="servico_nome"
-          value={form.servico_nome}
+          value={form.servico_nome || ""}
           onChange={handleChange}
           required
         />
@@ -66,7 +86,7 @@ export default function AgendaModal({ open, setOpen, agendamento }) {
           label="Data"
           name="data"
           type="date"
-          value={form.data}
+          value={form.data || ""}
           onChange={handleChange}
           required
         />
@@ -74,14 +94,14 @@ export default function AgendaModal({ open, setOpen, agendamento }) {
           label="Hora"
           name="hora"
           type="time"
-          value={form.hora}
+          value={form.hora || ""}
           onChange={handleChange}
           required
         />
         <FormInput
           label="Status"
           name="status"
-          value={form.status}
+          value={form.status || "Pendente"}
           onChange={handleChange}
           required
         />
@@ -90,14 +110,16 @@ export default function AgendaModal({ open, setOpen, agendamento }) {
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

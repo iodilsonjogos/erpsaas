@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarAvaliacao, editarAvaliacao } from "./avaliacaoService";
 
-/**
- * Modal para criar ou visualizar avaliação.
- * Props: open (boolean), setOpen (função), avaliacao (objeto ou null)
- */
-export default function AvaliacaoModal({ open, setOpen, avaliacao }) {
+export default function AvaliacaoModal({ open, setOpen, avaliacao, onRefresh }) {
   const [form, setForm] = useState({
     cliente_nome: "",
     profissional: "",
@@ -14,9 +11,14 @@ export default function AvaliacaoModal({ open, setOpen, avaliacao }) {
     comentario: "",
     data: "",
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (avaliacao) setForm(avaliacao);
+    if (avaliacao)
+      setForm({
+        ...avaliacao,
+        data: avaliacao.data ? avaliacao.data.split("T")[0] : ""
+      });
     else setForm({
       cliente_nome: "",
       profissional: "",
@@ -33,10 +35,21 @@ export default function AvaliacaoModal({ open, setOpen, avaliacao }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica para criar/editar avaliação (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (avaliacao && avaliacao.id) {
+        await editarAvaliacao(avaliacao.id, form);
+      } else {
+        await criarAvaliacao(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar avaliação!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -46,46 +59,49 @@ export default function AvaliacaoModal({ open, setOpen, avaliacao }) {
         onSubmit={handleSubmit}
       >
         <h2 className="text-lg font-bold mb-3">
-          {avaliacao ? "Detalhes da Avaliação" : "Nova Avaliação"}
+          {avaliacao ? "Editar Avaliação" : "Nova Avaliação"}
         </h2>
         <FormInput
           label="Cliente"
           name="cliente_nome"
-          value={form.cliente_nome}
+          value={form.cliente_nome || ""}
           onChange={handleChange}
           required
         />
         <FormInput
           label="Profissional"
           name="profissional"
-          value={form.profissional}
+          value={form.profissional || ""}
           onChange={handleChange}
+          required
         />
         <FormInput
           label="Serviço"
           name="servico"
-          value={form.servico}
+          value={form.servico || ""}
           onChange={handleChange}
         />
         <FormInput
           label="Nota"
           name="nota"
           type="number"
-          value={form.nota}
+          min="0"
+          max="10"
+          value={form.nota || ""}
           onChange={handleChange}
           required
         />
         <FormInput
           label="Comentário"
           name="comentario"
-          value={form.comentario}
+          value={form.comentario || ""}
           onChange={handleChange}
         />
         <FormInput
           label="Data"
           name="data"
           type="date"
-          value={form.data}
+          value={form.data || ""}
           onChange={handleChange}
         />
         <div className="flex justify-end gap-2 mt-4">
@@ -93,14 +109,16 @@ export default function AvaliacaoModal({ open, setOpen, avaliacao }) {
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
-            Fechar
+            Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

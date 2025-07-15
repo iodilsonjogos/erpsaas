@@ -1,15 +1,23 @@
-// /frontend/src/pages/logs/logsService.js
 import axios from "axios";
+const api = process.env.REACT_APP_API_URL;
 
-// Função para listar logs do sistema
+// Listar logs de ação
 export async function getLogs() {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("/api/logs", {
+    const response = await axios.get(`${api}/logs`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   } catch (error) {
     return [];
   }
+}
+
+// Excluir log (opcional, só para admin)
+export async function excluirLog(id) {
+  const token = localStorage.getItem("token");
+  return axios.delete(`${api}/logs/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 }

@@ -3,26 +3,27 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import IntegracaoModal from "./IntegracaoModal";
-import { getIntegracoes } from "./integracoesService";
+import { getIntegracoes, excluirIntegracao } from "./integracoesService";
 
 export default function IntegracoesPage() {
   const [integracoes, setIntegracoes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [integracaoEdit, setIntegracaoEdit] = useState(null);
 
+  async function loadIntegracoes() {
+    const data = await getIntegracoes();
+    setIntegracoes(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getIntegracoes();
-      setIntegracoes(data);
-    }
-    fetchData();
+    loadIntegracoes();
   }, []);
 
   const colunas = [
-    { key: "nome", label: "Integração" },
     { key: "tipo", label: "Tipo" },
+    { key: "nome", label: "Nome" },
     { key: "status", label: "Status", render: (item) => item.status ? "Ativa" : "Inativa" },
-    { key: "conectado_com", label: "Conectado com" },
+    { key: "dados", label: "Configuração" },
     {
       key: "acoes",
       label: "Ações",
@@ -35,9 +36,19 @@ export default function IntegracoesPage() {
               setShowModal(true);
             }}
           >
-            Configurar
+            Editar
           </button>
-          <button className="text-red-600 hover:underline">Desconectar</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirIntegracao(item.id);
+                loadIntegracoes();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -64,12 +75,13 @@ export default function IntegracoesPage() {
           <TableGeneric
             colunas={colunas}
             dados={integracoes}
-            vazio="Nenhuma integração ativa."
+            vazio="Nenhuma integração cadastrada."
           />
           <IntegracaoModal
             open={showModal}
             setOpen={setShowModal}
             integracao={integracaoEdit}
+            onRefresh={loadIntegracoes}
           />
         </main>
       </div>

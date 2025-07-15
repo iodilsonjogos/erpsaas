@@ -3,26 +3,28 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import FilaEsperaModal from "./FilaEsperaModal";
-import { getFilaEspera } from "./filaesperaService";
+import { getFilaEspera, excluirFilaEspera } from "./filaesperaService";
 
 export default function FilaEsperaPage() {
   const [fila, setFila] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [registroEdit, setRegistroEdit] = useState(null);
+  const [itemEdit, setItemEdit] = useState(null);
+
+  async function loadFila() {
+    const data = await getFilaEspera();
+    setFila(data);
+  }
 
   useEffect(() => {
-    async function fetchData() {
-      const data = await getFilaEspera();
-      setFila(data);
-    }
-    fetchData();
+    loadFila();
   }, []);
 
   const colunas = [
     { key: "cliente_nome", label: "Cliente" },
-    { key: "data", label: "Data" },
-    { key: "servico", label: "Serviço" },
-    { key: "profissional", label: "Profissional" },
+    { key: "profissional_nome", label: "Profissional" },
+    { key: "servico_nome", label: "Serviço" },
+    { key: "data", label: "Data", render: (item) => item.data ? item.data.split("T")[0] : "" },
+    { key: "hora", label: "Hora" },
     { key: "status", label: "Status" },
     {
       key: "acoes",
@@ -32,13 +34,23 @@ export default function FilaEsperaPage() {
           <button
             className="mr-2 text-blue-600 hover:underline"
             onClick={() => {
-              setRegistroEdit(item);
+              setItemEdit(item);
               setShowModal(true);
             }}
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirFilaEspera(item.id);
+                loadFila();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -55,11 +67,11 @@ export default function FilaEsperaPage() {
             <button
               className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
               onClick={() => {
-                setRegistroEdit(null);
+                setItemEdit(null);
                 setShowModal(true);
               }}
             >
-              Novo Encaixe
+              Novo Registro
             </button>
           </div>
           <TableGeneric
@@ -70,7 +82,8 @@ export default function FilaEsperaPage() {
           <FilaEsperaModal
             open={showModal}
             setOpen={setShowModal}
-            registro={registroEdit}
+            fila={itemEdit}
+            onRefresh={loadFila}
           />
         </main>
       </div>

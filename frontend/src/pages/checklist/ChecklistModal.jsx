@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarChecklist, editarChecklist } from "./checklistService";
 
-/**
- * Modal para criar ou editar item do checklist.
- * Props: open (boolean), setOpen (função), item (objeto ou null)
- */
-export default function ChecklistModal({ open, setOpen, item }) {
+export default function ChecklistModal({ open, setOpen, item, onRefresh }) {
   const [form, setForm] = useState({
     descricao: "",
     concluido: false
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (item) setForm(item);
@@ -23,10 +21,21 @@ export default function ChecklistModal({ open, setOpen, item }) {
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar/editar item do checklist (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (item && item.id) {
+        await editarChecklist(item.id, form);
+      } else {
+        await criarChecklist(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar item!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -41,7 +50,7 @@ export default function ChecklistModal({ open, setOpen, item }) {
         <FormInput
           label="Descrição"
           name="descricao"
-          value={form.descricao}
+          value={form.descricao || ""}
           onChange={handleChange}
           required
         />
@@ -60,14 +69,16 @@ export default function ChecklistModal({ open, setOpen, item }) {
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

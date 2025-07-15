@@ -3,26 +3,27 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import AgendaModal from "./AgendaModal";
-import { getAgendamentos } from "./agendaService";
+import { getAgendamentos, excluirAgendamento } from "./agendaService";
 
 export default function AgendaPage() {
-  const [agendamentos, setAgendamentos] = useState([]);
+  const [agendas, setAgendas] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [agendamentoEdit, setAgendamentoEdit] = useState(null);
+  const [agendaEdit, setAgendaEdit] = useState(null);
+
+  async function loadAgendas() {
+    const data = await getAgendamentos();
+    setAgendas(data);
+  }
 
   useEffect(() => {
-    async function fetchData() {
-      const data = await getAgendamentos();
-      setAgendamentos(data);
-    }
-    fetchData();
+    loadAgendas();
   }, []);
 
   const colunas = [
     { key: "cliente_nome", label: "Cliente" },
     { key: "profissional_nome", label: "Profissional" },
     { key: "servico_nome", label: "Serviço" },
-    { key: "data", label: "Data" },
+    { key: "data", label: "Data", render: (item) => item.data ? item.data.split("T")[0] : "" },
     { key: "hora", label: "Hora" },
     { key: "status", label: "Status" },
     {
@@ -33,13 +34,23 @@ export default function AgendaPage() {
           <button
             className="mr-2 text-blue-600 hover:underline"
             onClick={() => {
-              setAgendamentoEdit(item);
+              setAgendaEdit(item);
               setShowModal(true);
             }}
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirAgendamento(item.id);
+                loadAgendas();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -56,7 +67,7 @@ export default function AgendaPage() {
             <button
               className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
               onClick={() => {
-                setAgendamentoEdit(null);
+                setAgendaEdit(null);
                 setShowModal(true);
               }}
             >
@@ -65,13 +76,14 @@ export default function AgendaPage() {
           </div>
           <TableGeneric
             colunas={colunas}
-            dados={agendamentos}
-            vazio="Nenhum agendamento cadastrado."
+            dados={agendas}
+            vazio="Nenhum agendamento encontrado."
           />
           <AgendaModal
             open={showModal}
             setOpen={setShowModal}
-            agendamento={agendamentoEdit}
+            agendamento={agendaEdit}
+            onRefresh={loadAgendas}
           />
         </main>
       </div>

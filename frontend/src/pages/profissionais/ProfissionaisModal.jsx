@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarProfissional, editarProfissional } from "./profissionaisService";
 
-/**
- * Modal para criar ou editar produto.
- * Props: open (boolean), setOpen (função), produto (objeto ou null)
- */
-export default function ProdutosModal({ open, setOpen, produto }) {
+export default function ProfissionaisModal({ open, setOpen, profissional, onRefresh }) {
   const [form, setForm] = useState({
     nome: "",
-    categoria: "",
-    preco: "",
-    estoque: "",
-    ativo: true,
+    email: "",
+    especialidade: "",
+    telefone: "",
+    status: true
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (produto) setForm(produto);
-    else setForm({ nome: "", categoria: "", preco: "", estoque: "", ativo: true });
-  }, [produto, open]);
+    if (profissional) setForm(profissional);
+    else setForm({ nome: "", email: "", especialidade: "", telefone: "", status: true });
+  }, [profissional, open]);
 
   if (!open) return null;
 
@@ -26,10 +24,21 @@ export default function ProdutosModal({ open, setOpen, produto }) {
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar ou editar (chamar serviço)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (profissional && profissional.id) {
+        await editarProfissional(profissional.id, form);
+      } else {
+        await criarProfissional(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar profissional!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -39,58 +48,59 @@ export default function ProdutosModal({ open, setOpen, produto }) {
         onSubmit={handleSubmit}
       >
         <h2 className="text-lg font-bold mb-3">
-          {produto ? "Editar Produto" : "Novo Produto"}
+          {profissional ? "Editar Profissional" : "Novo Profissional"}
         </h2>
         <FormInput
           label="Nome"
           name="nome"
-          value={form.nome}
+          value={form.nome || ""}
           onChange={handleChange}
           required
         />
         <FormInput
-          label="Categoria"
-          name="categoria"
-          value={form.categoria}
+          label="Email"
+          name="email"
+          type="email"
+          value={form.email || ""}
           onChange={handleChange}
         />
         <FormInput
-          label="Preço"
-          name="preco"
-          type="number"
-          value={form.preco}
+          label="Especialidade"
+          name="especialidade"
+          value={form.especialidade || ""}
           onChange={handleChange}
         />
         <FormInput
-          label="Estoque"
-          name="estoque"
-          type="number"
-          value={form.estoque}
+          label="Telefone"
+          name="telefone"
+          value={form.telefone || ""}
           onChange={handleChange}
         />
         <div className="mb-3 flex items-center gap-2">
           <input
             type="checkbox"
-            name="ativo"
-            checked={form.ativo}
+            name="status"
+            checked={form.status}
             onChange={handleChange}
-            id="ativo"
+            id="status"
           />
-          <label htmlFor="ativo">Ativo</label>
+          <label htmlFor="status">Ativo</label>
         </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

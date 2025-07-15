@@ -3,26 +3,27 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import UsuariosModal from "./UsuariosModal";
-import { getUsuarios } from "./usuariosService";
+import { getUsuarios, excluirUsuario } from "./usuariosService";
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [usuarioEdit, setUsuarioEdit] = useState(null);
 
+  async function loadUsuarios() {
+    const data = await getUsuarios();
+    setUsuarios(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getUsuarios();
-      setUsuarios(data);
-    }
-    fetchData();
+    loadUsuarios();
   }, []);
 
   const colunas = [
     { key: "nome", label: "Nome" },
-    { key: "email", label: "E-mail" },
+    { key: "email", label: "Email" },
     { key: "perfil", label: "Perfil" },
-    { key: "ativo", label: "Status", render: (item) => item.ativo ? "Ativo" : "Inativo" },
+    { key: "status", label: "Status", render: (item) => item.status ? "Ativo" : "Inativo" },
     {
       key: "acoes",
       label: "Ações",
@@ -37,7 +38,17 @@ export default function UsuariosPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirUsuario(item.id);
+                loadUsuarios();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -70,6 +81,7 @@ export default function UsuariosPage() {
             open={showModal}
             setOpen={setShowModal}
             usuario={usuarioEdit}
+            onRefresh={loadUsuarios}
           />
         </main>
       </div>

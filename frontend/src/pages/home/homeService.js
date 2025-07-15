@@ -1,15 +1,28 @@
-// /frontend/src/pages/home/homeService.js
 import axios from "axios";
+const api = process.env.REACT_APP_API_URL;
 
-// Função para buscar resumos do usuário logado
+// Resumo dos indicadores principais do usuário (não admin)
 export async function getResumoHome() {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("/api/home/resumo", {
+    const res = await axios.get(`${api}/home`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    return response.data;
-  } catch (error) {
+    return res.data;
+  } catch {
     return {};
+  }
+}
+
+// Próximos atendimentos do usuário
+export async function getProximosAtendimentos() {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.get(`${api}/home/proximos-agendamentos`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  } catch {
+    return [];
   }
 }

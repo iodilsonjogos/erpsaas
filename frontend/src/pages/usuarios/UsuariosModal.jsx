@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarUsuario, editarUsuario } from "./usuariosService";
 
-/**
- * Modal para criar ou editar usuário.
- * Props: open (boolean), setOpen (função), usuario (objeto ou null)
- */
-export default function UsuariosModal({ open, setOpen, usuario }) {
+const PERFIS = ["admin", "operador", "cliente"];
+
+export default function UsuariosModal({ open, setOpen, usuario, onRefresh }) {
   const [form, setForm] = useState({
     nome: "",
     email: "",
     senha: "",
     perfil: "operador",
-    ativo: true,
+    status: true
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (usuario) setForm({ ...usuario, senha: "" });
-    else setForm({ nome: "", email: "", senha: "", perfil: "operador", ativo: true });
+    else setForm({ nome: "", email: "", senha: "", perfil: "operador", status: true });
   }, [usuario, open]);
 
   if (!open) return null;
@@ -26,10 +26,24 @@ export default function UsuariosModal({ open, setOpen, usuario }) {
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar ou editar (chamar serviço)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (usuario && usuario.id) {
+        // Editar não obriga alterar senha
+        const payload = { ...form };
+        if (!payload.senha) delete payload.senha;
+        await editarUsuario(usuario.id, payload);
+      } else {
+        await criarUsuario(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar usuário!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -44,15 +58,15 @@ export default function UsuariosModal({ open, setOpen, usuario }) {
         <FormInput
           label="Nome"
           name="nome"
-          value={form.nome}
+          value={form.nome || ""}
           onChange={handleChange}
           required
         />
         <FormInput
-          label="E-mail"
+          label="Email"
           name="email"
           type="email"
-          value={form.email}
+          value={form.email || ""}
           onChange={handleChange}
           required
         />
@@ -60,9 +74,10 @@ export default function UsuariosModal({ open, setOpen, usuario }) {
           label="Senha"
           name="senha"
           type="password"
-          value={form.senha}
+          value={form.senha || ""}
           onChange={handleChange}
           required={!usuario}
+          placeholder={usuario ? "Deixe em branco para não alterar" : ""}
         />
         <div className="mb-3">
           <label className="block mb-1">Perfil</label>
@@ -73,35 +88,34 @@ export default function UsuariosModal({ open, setOpen, usuario }) {
             onChange={handleChange}
             required
           >
-            <option value="admin">Administrador</option>
-            <option value="operador">Operador</option>
-            <option value="profissional">Profissional</option>
-            <option value="cliente">Cliente</option>
+            {PERFIS.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
         <div className="mb-3 flex items-center gap-2">
           <input
             type="checkbox"
-            name="ativo"
-            checked={form.ativo}
+            name="status"
+            checked={form.status}
             onChange={handleChange}
-            id="ativo"
+            id="status"
           />
-          <label htmlFor="ativo">Ativo</label>
+          <label htmlFor="status">Ativo</label>
         </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

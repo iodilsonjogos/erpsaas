@@ -1,17 +1,36 @@
-// /frontend/src/pages/permissoes/permissoesService.js
 import axios from "axios";
+const api = process.env.REACT_APP_API_URL;
 
-// Função para listar permissões/ACL
-export async function getPermissoes() {
+// Perfis disponíveis
+export async function getPerfis() {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("/api/permissoes", {
+    const res = await axios.get(`${api}/permissoes/perfis`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    return response.data;
-  } catch (error) {
+    return res.data; // Ex: ["admin", "operador", "cliente"]
+  } catch {
     return [];
   }
 }
 
-// Adicione funções para criar, editar permissões
+// Permissões do perfil
+export async function getPermissoes(perfil) {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.get(`${api}/permissoes/${perfil}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data; // Ex: { clientes: ["visualizar", "editar"], ... }
+  } catch {
+    return {};
+  }
+}
+
+// Atualizar permissões do perfil
+export async function atualizarPermissoes(perfil, permissoes) {
+  const token = localStorage.getItem("token");
+  return axios.put(`${api}/permissoes/${perfil}`, permissoes, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}

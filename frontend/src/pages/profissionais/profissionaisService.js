@@ -1,11 +1,11 @@
 import axios from "axios";
 const api = process.env.REACT_APP_API_URL;
 
-// Listar usuários
-export async function getUsuarios() {
+// Listar profissionais
+export async function getProfissionais() {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get(`${api}/usuarios`, {
+    const response = await axios.get(`${api}/profissionais`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -14,26 +14,26 @@ export async function getUsuarios() {
   }
 }
 
-// Criar usuário
-export async function criarUsuario(data) {
+// Criar profissional
+export async function criarProfissional(data) {
   const token = localStorage.getItem("token");
-  return axios.post(`${api}/usuarios`, data, {
+  return axios.post(`${api}/profissionais`, data, {
     headers: { Authorization: `Bearer ${token}` }
   });
 }
 
-// Editar usuário
-export async function editarUsuario(id, data) {
+// Editar profissional
+export async function editarProfissional(id, data) {
   const token = localStorage.getItem("token");
-  return axios.put(`${api}/usuarios/${id}`, data, {
+  return axios.put(`${api}/profissionais/${id}`, data, {
     headers: { Authorization: `Bearer ${token}` }
   });
 }
 
-// Excluir usuário
-export async function excluirUsuario(id) {
+// Excluir profissional
+export async function excluirProfissional(id) {
   const token = localStorage.getItem("token");
-  return axios.delete(`${api}/usuarios/${id}`, {
+  return axios.delete(`${api}/profissionais/${id}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
 }

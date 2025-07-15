@@ -1,34 +1,22 @@
-import React, { useState } from "react";
+import React from "react";
 
-/**
- * Exemplo de modal que pode ser usado para detalhes do dashboard,
- * filtros, configurações rápidas, etc.
- */
-export default function DashboardModal() {
-  const [open, setOpen] = useState(false);
-
+export default function DashboardModal({ open, setOpen, titulo, children }) {
+  if (!open) return null;
   return (
-    <>
-      <button
-        className="mt-8 px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
-        onClick={() => setOpen(true)}
-      >
-        Abrir Modal de Exemplo
-      </button>
-      {open && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg min-w-[320px]">
-            <h2 className="text-lg font-bold mb-3">Exemplo de Modal</h2>
-            <p>Este é um modal de demonstração. Use para mostrar detalhes, filtros, etc.</p>
-            <button
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              onClick={() => setOpen(false)}
-            >
-              Fechar
-            </button>
-          </div>
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded-2xl shadow-xl min-w-[340px] max-w-xl">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold">{titulo || "Detalhes"}</h2>
+          <button
+            className="text-gray-500 hover:text-red-600 text-2xl font-bold"
+            onClick={() => setOpen(false)}
+            aria-label="Fechar"
+          >
+            ×
+          </button>
         </div>
-      )}
-    </>
+        <div>{children}</div>
+      </div>
+    </div>
   );
 }

@@ -2,18 +2,19 @@ import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import ClienteAgendamentoModal from "./ClienteAgendamentoModal";
-import { getMeusAgendamentos } from "./clienteService";
+import { getClientes } from "./clienteService"; // CORRIGIDO!
 
 export default function ClienteDashboardPage() {
   const [agendamentos, setAgendamentos] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [agendamentoEdit, setAgendamentoEdit] = useState(null);
 
+  async function fetchData() {
+    const data = await getClientes(); // CORRIGIDO!
+    setAgendamentos(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getMeusAgendamentos();
-      setAgendamentos(data);
-    }
     fetchData();
   }, []);
 
@@ -67,6 +68,7 @@ export default function ClienteDashboardPage() {
           open={showModal}
           setOpen={setShowModal}
           agendamento={agendamentoEdit}
+          onRefresh={fetchData}
         />
       </main>
     </div>

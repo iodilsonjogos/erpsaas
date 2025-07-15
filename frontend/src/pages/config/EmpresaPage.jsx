@@ -1,14 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import Header from '../../components/Header';
-import Sidebar from '../../components/Sidebar';
-import axios from 'axios';
-
-const apiUrl = process.env.REACT_APP_API_URL + '/config/empresa';
+// ...importações iguais
 
 export default function EmpresaPage() {
   const [empresa, setEmpresa] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchEmpresa = async () => {
@@ -35,15 +31,23 @@ export default function EmpresaPage() {
     );
     setForm({ ...form, logo: res.data.logo });
   };
+
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+
   const handleSave = async () => {
-    const token = localStorage.getItem('token');
-    await axios.put(apiUrl, form, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setEditMode(false);
-    setEmpresa(form);
-    alert('Dados atualizados!');
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(apiUrl, form, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEditMode(false);
+      setEmpresa(form);
+      alert('Dados atualizados!');
+    } catch {
+      alert("Erro ao salvar dados!");
+    }
+    setLoading(false);
   };
 
   if (!empresa) return <div>Carregando...</div>;
@@ -102,8 +106,8 @@ export default function EmpresaPage() {
                 )}
               </div>
               <div className="flex gap-2 mt-4">
-                <button type="submit" className="btn btn-primary">Salvar</button>
-                <button type="button" className="btn btn-outline" onClick={() => setEditMode(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={loading}>Salvar</button>
+                <button type="button" className="btn btn-outline" onClick={() => setEditMode(false)} disabled={loading}>Cancelar</button>
               </div>
             </form>
           )}

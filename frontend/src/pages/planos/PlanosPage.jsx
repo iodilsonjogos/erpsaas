@@ -3,29 +3,28 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import PlanosModal from "./PlanosModal";
-import { getPlanos } from "./planosService";
+import { getPlanos, excluirPlano } from "./planosService";
 
 export default function PlanosPage() {
   const [planos, setPlanos] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [planoEdit, setPlanoEdit] = useState(null);
 
+  async function loadPlanos() {
+    const data = await getPlanos();
+    setPlanos(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getPlanos();
-      setPlanos(data);
-    }
-    fetchData();
+    loadPlanos();
   }, []);
 
   const colunas = [
-    { key: "nome", label: "Nome do Plano" },
+    { key: "nome", label: "Nome" },
     { key: "descricao", label: "Descrição" },
-    { key: "valor", label: "Valor Mensal" },
-    { key: "limite_clientes", label: "Limite Clientes" },
-    { key: "limite_profissionais", label: "Limite Profissionais" },
-    { key: "limite_usuarios", label: "Limite Usuários" },
-    { key: "status", label: "Status", render: (item) => item.status === "ativo" ? "Ativo" : "Inativo" },
+    { key: "valor", label: "Valor", render: (item) => "R$ " + Number(item.valor).toFixed(2) },
+    { key: "usuarios", label: "Usuários" },
+    { key: "recursos", label: "Recursos" },
     {
       key: "acoes",
       label: "Ações",
@@ -40,7 +39,17 @@ export default function PlanosPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirPlano(item.id);
+                loadPlanos();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -69,10 +78,11 @@ export default function PlanosPage() {
             dados={planos}
             vazio="Nenhum plano cadastrado."
           />
-          <PlanosModal
+          <PlanoModal
             open={showModal}
             setOpen={setShowModal}
             plano={planoEdit}
+            onRefresh={loadPlanos}
           />
         </main>
       </div>

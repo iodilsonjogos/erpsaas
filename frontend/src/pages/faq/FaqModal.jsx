@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarFaq, editarFaq } from "./faqService";
 
-/**
- * Modal para criar ou editar pergunta/resposta da FAQ.
- * Props: open (boolean), setOpen (função), faq (objeto ou null)
- */
-export default function FaqModal({ open, setOpen, faq }) {
+export default function FaqModal({ open, setOpen, faq, onRefresh }) {
   const [form, setForm] = useState({
     pergunta: "",
     resposta: ""
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (faq) setForm(faq);
@@ -22,10 +20,21 @@ export default function FaqModal({ open, setOpen, faq }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar/editar FAQ (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (faq && faq.id) {
+        await editarFaq(faq.id, form);
+      } else {
+        await criarFaq(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar FAQ!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -40,33 +49,32 @@ export default function FaqModal({ open, setOpen, faq }) {
         <FormInput
           label="Pergunta"
           name="pergunta"
-          value={form.pergunta}
+          value={form.pergunta || ""}
           onChange={handleChange}
           required
         />
-        <div className="mb-3">
-          <label className="block mb-1">Resposta</label>
-          <textarea
-            className="w-full border rounded p-2"
-            name="resposta"
-            value={form.resposta}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <FormInput
+          label="Resposta"
+          name="resposta"
+          value={form.resposta || ""}
+          onChange={handleChange}
+          required
+        />
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

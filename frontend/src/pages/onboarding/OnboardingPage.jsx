@@ -1,21 +1,58 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
+import TableGeneric from "../../components/TableGeneric";
 import OnboardingModal from "./OnboardingModal";
-import { getOnboardingSteps } from "./onboardingService";
+import { getEtapasOnboarding, excluirEtapaOnboarding } from "./onboardingService";
 
 export default function OnboardingPage() {
-  const [steps, setSteps] = useState([]);
+  const [etapas, setEtapas] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [stepEdit, setStepEdit] = useState(null);
+  const [etapaEdit, setEtapaEdit] = useState(null);
+
+  async function loadEtapas() {
+    const data = await getEtapasOnboarding();
+    setEtapas(data);
+  }
 
   useEffect(() => {
-    async function fetchData() {
-      const data = await getOnboardingSteps();
-      setSteps(data);
-    }
-    fetchData();
+    loadEtapas();
   }, []);
+
+  const colunas = [
+    { key: "ordem", label: "Ordem" },
+    { key: "titulo", label: "Título" },
+    { key: "descricao", label: "Descrição" },
+    { key: "completa", label: "Completa", render: (item) => item.completa ? "Sim" : "Não" },
+    {
+      key: "acoes",
+      label: "Ações",
+      render: (item) => (
+        <div>
+          <button
+            className="mr-2 text-blue-600 hover:underline"
+            onClick={() => {
+              setEtapaEdit(item);
+              setShowModal(true);
+            }}
+          >
+            Editar
+          </button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirEtapaOnboarding(item.id);
+                loadEtapas();
+              }
+            }}
+          >
+            Excluir
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -24,46 +61,27 @@ export default function OnboardingPage() {
         <Header />
         <main className="flex-1 p-6 overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Primeiros Passos / Ajuda</h1>
+            <h1 className="text-2xl font-bold">Onboarding (Boas-vindas)</h1>
             <button
               className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
               onClick={() => {
-                setStepEdit(null);
+                setEtapaEdit(null);
                 setShowModal(true);
               }}
             >
-              Novo Passo / Dica
+              Nova Etapa
             </button>
           </div>
-          <div className="space-y-3">
-            {steps.length === 0 && (
-              <div className="text-gray-400">Nenhuma dica ou passo cadastrados.</div>
-            )}
-            {steps.map((step, idx) => (
-              <div key={idx} className="bg-white rounded-xl shadow p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="font-bold">{step.titulo}</div>
-                  <div className="text-gray-600 text-sm">{step.descricao}</div>
-                </div>
-                <div className="flex gap-2 mt-2 sm:mt-0">
-                  <button
-                    className="text-blue-600 hover:underline"
-                    onClick={() => {
-                      setStepEdit(step);
-                      setShowModal(true);
-                    }}
-                  >
-                    Editar
-                  </button>
-                  <button className="text-red-600 hover:underline">Excluir</button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TableGeneric
+            colunas={colunas}
+            dados={etapas}
+            vazio="Nenhuma etapa cadastrada."
+          />
           <OnboardingModal
             open={showModal}
             setOpen={setShowModal}
-            step={stepEdit}
+            etapa={etapaEdit}
+            onRefresh={loadEtapas}
           />
         </main>
       </div>

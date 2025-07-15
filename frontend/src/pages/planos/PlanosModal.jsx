@@ -1,45 +1,43 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarPlano, editarPlano } from "./planosService";
 
-/**
- * Modal para criar ou editar plano SaaS.
- * Props: open (boolean), setOpen (função), plano (objeto ou null)
- */
-export default function PlanosModal({ open, setOpen, plano }) {
+export default function PlanoModal({ open, setOpen, plano, onRefresh }) {
   const [form, setForm] = useState({
     nome: "",
     descricao: "",
     valor: "",
-    limite_clientes: "",
-    limite_profissionais: "",
-    limite_usuarios: "",
-    status: "ativo",
+    usuarios: "",
+    recursos: ""
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (plano) setForm(plano);
-    else setForm({
-      nome: "",
-      descricao: "",
-      valor: "",
-      limite_clientes: "",
-      limite_profissionais: "",
-      limite_usuarios: "",
-      status: "ativo"
-    });
+    else setForm({ nome: "", descricao: "", valor: "", usuarios: "", recursos: "" });
   }, [plano, open]);
 
   if (!open) return null;
 
   function handleChange(e) {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar/editar plano (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (plano && plano.id) {
+        await editarPlano(plano.id, form);
+      } else {
+        await criarPlano(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar plano!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -52,71 +50,55 @@ export default function PlanosModal({ open, setOpen, plano }) {
           {plano ? "Editar Plano" : "Novo Plano"}
         </h2>
         <FormInput
-          label="Nome do Plano"
+          label="Nome"
           name="nome"
-          value={form.nome}
+          value={form.nome || ""}
           onChange={handleChange}
           required
         />
         <FormInput
           label="Descrição"
           name="descricao"
-          value={form.descricao}
+          value={form.descricao || ""}
           onChange={handleChange}
         />
         <FormInput
-          label="Valor Mensal"
+          label="Valor"
           name="valor"
           type="number"
-          value={form.valor}
+          value={form.valor || ""}
+          onChange={handleChange}
+          required
+        />
+        <FormInput
+          label="Nº Máximo de Usuários"
+          name="usuarios"
+          type="number"
+          value={form.usuarios || ""}
           onChange={handleChange}
         />
         <FormInput
-          label="Limite Clientes"
-          name="limite_clientes"
-          type="number"
-          value={form.limite_clientes}
+          label="Recursos"
+          name="recursos"
+          value={form.recursos || ""}
           onChange={handleChange}
+          placeholder="Recursos/limites do plano"
         />
-        <FormInput
-          label="Limite Profissionais"
-          name="limite_profissionais"
-          type="number"
-          value={form.limite_profissionais}
-          onChange={handleChange}
-        />
-        <FormInput
-          label="Limite Usuários"
-          name="limite_usuarios"
-          type="number"
-          value={form.limite_usuarios}
-          onChange={handleChange}
-        />
-        <div className="mb-3">
-          <label className="block mb-1">Status</label>
-          <select
-            className="w-full border rounded p-2"
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-          >
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-          </select>
-        </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

@@ -1,31 +1,29 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarComissao, editarComissao } from "./comissoesService";
 
-/**
- * Modal para criar ou editar comissão.
- * Props: open (boolean), setOpen (função), comissao (objeto ou null)
- */
-export default function ComissoesModal({ open, setOpen, comissao }) {
+export default function ComissoesModal({ open, setOpen, comissao, onRefresh }) {
   const [form, setForm] = useState({
-    profissional: "",
-    servico: "",
-    valor_servico: "",
-    percentual: "",
+    profissional_nome: "",
+    servico_nome: "",
+    venda_id: "",
     valor_comissao: "",
     data: "",
-    status: "Pendente"
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (comissao) setForm(comissao);
+    if (comissao)
+      setForm({
+        ...comissao,
+        data: comissao.data ? comissao.data.split("T")[0] : ""
+      });
     else setForm({
-      profissional: "",
-      servico: "",
-      valor_servico: "",
-      percentual: "",
+      profissional_nome: "",
+      servico_nome: "",
+      venda_id: "",
       valor_comissao: "",
       data: "",
-      status: "Pendente"
     });
   }, [comissao, open]);
 
@@ -35,10 +33,21 @@ export default function ComissoesModal({ open, setOpen, comissao }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar/editar comissão (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (comissao && comissao.id) {
+        await editarComissao(comissao.id, form);
+      } else {
+        await criarComissao(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar comissão!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -52,39 +61,28 @@ export default function ComissoesModal({ open, setOpen, comissao }) {
         </h2>
         <FormInput
           label="Profissional"
-          name="profissional"
-          value={form.profissional}
+          name="profissional_nome"
+          value={form.profissional_nome || ""}
           onChange={handleChange}
           required
         />
         <FormInput
           label="Serviço"
-          name="servico"
-          value={form.servico}
+          name="servico_nome"
+          value={form.servico_nome || ""}
           onChange={handleChange}
-          required
         />
         <FormInput
-          label="Valor do Serviço"
-          name="valor_servico"
-          type="number"
-          value={form.valor_servico}
+          label="Venda ID"
+          name="venda_id"
+          value={form.venda_id || ""}
           onChange={handleChange}
-          required
         />
         <FormInput
-          label="Comissão (%)"
-          name="percentual"
-          type="number"
-          value={form.percentual}
-          onChange={handleChange}
-          required
-        />
-        <FormInput
-          label="Valor da Comissão"
+          label="Valor Comissão"
           name="valor_comissao"
           type="number"
-          value={form.valor_comissao}
+          value={form.valor_comissao || ""}
           onChange={handleChange}
           required
         />
@@ -92,37 +90,25 @@ export default function ComissoesModal({ open, setOpen, comissao }) {
           label="Data"
           name="data"
           type="date"
-          value={form.data}
+          value={form.data || ""}
           onChange={handleChange}
           required
         />
-        <div className="mb-3">
-          <label className="block mb-1">Status</label>
-          <select
-            className="w-full border rounded p-2"
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            required
-          >
-            <option value="Pendente">Pendente</option>
-            <option value="Pago">Pago</option>
-            <option value="Aguardando">Aguardando</option>
-          </select>
-        </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

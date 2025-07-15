@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { salvarConfiguracoes } from "./configuracoesService";
 
 /**
  * Modal para editar as configurações da empresa.
@@ -18,6 +19,7 @@ export default function ConfiguracoesModal({ open, setOpen, config, setConfig })
     tipo_comissao: "percentual",
     valor_comissao: "10.00"
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (config) setForm(config);
@@ -30,11 +32,17 @@ export default function ConfiguracoesModal({ open, setOpen, config, setConfig })
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica para salvar (PUT via service)
-    setConfig(form); // só para atualização visual imediata
-    setOpen(false);
+    setLoading(true);
+    try {
+      await salvarConfiguracoes(form); // Atualiza no backend!
+      setConfig(form); // Atualiza visual no frontend
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar configurações!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -84,8 +92,8 @@ export default function ConfiguracoesModal({ open, setOpen, config, setConfig })
           <button type="button" className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" onClick={() => setOpen(false)}>
             Cancelar
           </button>
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Salvar
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" disabled={loading}>
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

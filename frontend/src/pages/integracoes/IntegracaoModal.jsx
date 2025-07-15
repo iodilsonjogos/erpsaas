@@ -1,41 +1,43 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarIntegracao, editarIntegracao } from "./integracoesService";
 
-/**
- * Modal para configurar ou editar integração.
- * Props: open (boolean), setOpen (função), integracao (objeto ou null)
- */
-export default function IntegracaoModal({ open, setOpen, integracao }) {
+export default function IntegracaoModal({ open, setOpen, integracao, onRefresh }) {
   const [form, setForm] = useState({
-    nome: "",
     tipo: "",
+    nome: "",
     status: true,
-    conectado_com: "",
-    credenciais: "",
+    dados: ""
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (integracao) setForm(integracao);
-    else setForm({
-      nome: "",
-      tipo: "",
-      status: true,
-      conectado_com: "",
-      credenciais: "",
-    });
+    else setForm({ tipo: "", nome: "", status: true, dados: "" });
   }, [integracao, open]);
 
   if (!open) return null;
 
   function handleChange(e) {
-    const { name, value, type, checked } = e.target;
+    const { name, type, value, checked } = e.target;
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar/editar integração (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (integracao && integracao.id) {
+        await editarIntegracao(integracao.id, form);
+      } else {
+        await criarIntegracao(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar integração!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -45,36 +47,22 @@ export default function IntegracaoModal({ open, setOpen, integracao }) {
         onSubmit={handleSubmit}
       >
         <h2 className="text-lg font-bold mb-3">
-          {integracao ? "Configurar Integração" : "Nova Integração"}
+          {integracao ? "Editar Integração" : "Nova Integração"}
         </h2>
+        <FormInput
+          label="Tipo"
+          name="tipo"
+          value={form.tipo || ""}
+          onChange={handleChange}
+          required
+          placeholder="WhatsApp, E-mail, Gateway, etc"
+        />
         <FormInput
           label="Nome"
           name="nome"
-          value={form.nome}
+          value={form.nome || ""}
           onChange={handleChange}
           required
-        />
-        <div className="mb-3">
-          <label className="block mb-1">Tipo</label>
-          <select
-            className="w-full border rounded p-2"
-            name="tipo"
-            value={form.tipo}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Selecione...</option>
-            <option value="Google Calendar">Google Calendar</option>
-            <option value="Pagamentos">Pagamentos</option>
-            <option value="WhatsApp">WhatsApp</option>
-            <option value="Outros">Outros</option>
-          </select>
-        </div>
-        <FormInput
-          label="Conectado com"
-          name="conectado_com"
-          value={form.conectado_com}
-          onChange={handleChange}
         />
         <div className="mb-3 flex items-center gap-2">
           <input
@@ -86,25 +74,31 @@ export default function IntegracaoModal({ open, setOpen, integracao }) {
           />
           <label htmlFor="status">Ativa</label>
         </div>
-        <FormInput
-          label="Credenciais (Token, API Key, etc)"
-          name="credenciais"
-          value={form.credenciais}
-          onChange={handleChange}
-        />
+        <div className="mb-3">
+          <label className="block mb-1">Configuração/Dados</label>
+          <textarea
+            className="w-full border rounded p-2"
+            name="dados"
+            value={form.dados || ""}
+            onChange={handleChange}
+            rows={3}
+          />
+        </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

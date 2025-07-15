@@ -2,19 +2,20 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import ChecklistModal from "./ChecklistModal";
-import { getChecklist } from "./checklistService";
+import { getChecklist, excluirChecklist } from "./checklistService";
 
 export default function ChecklistPage() {
   const [checklist, setChecklist] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [itemEdit, setItemEdit] = useState(null);
 
+  async function loadChecklist() {
+    const data = await getChecklist();
+    setChecklist(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getChecklist();
-      setChecklist(data);
-    }
-    fetchData();
+    loadChecklist();
   }, []);
 
   return (
@@ -54,7 +55,17 @@ export default function ChecklistPage() {
                   >
                     Editar
                   </button>
-                  <button className="text-red-600 hover:underline">Excluir</button>
+                  <button
+                    className="text-red-600 hover:underline"
+                    onClick={async () => {
+                      if (window.confirm("Confirma exclusão?")) {
+                        await excluirChecklist(item.id);
+                        loadChecklist();
+                      }
+                    }}
+                  >
+                    Excluir
+                  </button>
                 </div>
               </div>
             ))}
@@ -63,6 +74,7 @@ export default function ChecklistPage() {
             open={showModal}
             setOpen={setShowModal}
             item={itemEdit}
+            onRefresh={loadChecklist}
           />
         </main>
       </div>

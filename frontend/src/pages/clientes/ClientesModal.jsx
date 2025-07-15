@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarCliente, editarCliente } from "./clienteService";
 
-/**
- * Modal para criar ou editar cliente.
- * Recebe props: open (boolean), setOpen (função), cliente (objeto ou null)
- */
-export default function ClientesModal({ open, setOpen, cliente }) {
+export default function ClientesModal({ open, setOpen, cliente, onRefresh }) {
   const [form, setForm] = useState({
     nome: "",
     email: "",
-    telefone: ""
+    telefone: "",
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (cliente) setForm(cliente);
@@ -23,10 +21,21 @@ export default function ClientesModal({ open, setOpen, cliente }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai a lógica de salvar ou editar (chamar serviço)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (cliente && cliente.id) {
+        await editarCliente(cliente.id, form);
+      } else {
+        await criarCliente(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar cliente!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -41,7 +50,7 @@ export default function ClientesModal({ open, setOpen, cliente }) {
         <FormInput
           label="Nome"
           name="nome"
-          value={form.nome}
+          value={form.nome || ""}
           onChange={handleChange}
           required
         />
@@ -49,14 +58,14 @@ export default function ClientesModal({ open, setOpen, cliente }) {
           label="E-mail"
           name="email"
           type="email"
-          value={form.email}
+          value={form.email || ""}
           onChange={handleChange}
         />
         <FormInput
           label="Telefone"
           name="telefone"
           type="tel"
-          value={form.telefone}
+          value={form.telefone || ""}
           onChange={handleChange}
         />
         <div className="flex justify-end gap-2 mt-4">
@@ -64,14 +73,16 @@ export default function ClientesModal({ open, setOpen, cliente }) {
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

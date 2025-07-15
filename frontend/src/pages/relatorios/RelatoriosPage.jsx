@@ -1,79 +1,75 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
-import TableGeneric from "../../components/TableGeneric";
-import RelatoriosModal from "./RelatoriosModal";
-import { getRelatorios } from "./relatoriosService";
+import { exportarRelatorio } from "./relatoriosService";
+
+const MODULOS = [
+  { key: "vendas", label: "Vendas" },
+  { key: "clientes", label: "Clientes" },
+  { key: "produtos", label: "Produtos" },
+  { key: "agenda", label: "Agenda" },
+  { key: "financeiro", label: "Financeiro" }
+];
 
 export default function RelatoriosPage() {
-  const [relatorios, setRelatorios] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [relatorioFiltro, setRelatorioFiltro] = useState(null);
+  const [modulo, setModulo] = useState("vendas");
+  const [formato, setFormato] = useState("excel");
+  const [dataIni, setDataIni] = useState("");
+  const [dataFim, setDataFim] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function fetchData() {
-      const data = await getRelatorios();
-      setRelatorios(data);
+  async function handleExportar(e) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await exportarRelatorio(modulo, formato, { data_ini: dataIni, data_fim: dataFim });
+    } catch {
+      alert("Erro ao exportar relatório.");
     }
-    fetchData();
-  }, []);
-
-  const colunas = [
-    { key: "tipo", label: "Tipo de Relatório" },
-    { key: "periodo", label: "Período" },
-    { key: "criado_em", label: "Gerado em" },
-    {
-      key: "acoes",
-      label: "Ações",
-      render: (item) => (
-        <div>
-          <a
-            href={item.url}
-            className="mr-2 text-blue-600 hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Baixar
-          </a>
-          <button
-            className="text-gray-600 hover:underline"
-            onClick={() => {
-              setRelatorioFiltro(item);
-              setShowModal(true);
-            }}
-          >
-            Filtros
-          </button>
-        </div>
-      ),
-    },
-  ];
+    setLoading(false);
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header />
-        <main className="flex-1 p-6 overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Relatórios</h1>
+        <main className="flex-1 p-6 overflow-y-auto max-w-lg mx-auto">
+          <h1 className="text-2xl font-bold mb-8">Relatórios</h1>
+          <form className="bg-white p-8 rounded-xl shadow-xl" onSubmit={handleExportar}>
+            <div className="mb-4">
+              <label className="block mb-1 font-semibold">Módulo</label>
+              <select className="w-full border rounded p-2" value={modulo} onChange={e => setModulo(e.target.value)}>
+                {MODULOS.map((m) => (
+                  <option key={m.key} value={m.key}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block mb-1 font-semibold">Formato</label>
+              <select className="w-full border rounded p-2" value={formato} onChange={e => setFormato(e.target.value)}>
+                <option value="excel">Excel (.xlsx)</option>
+                <option value="pdf">PDF</option>
+              </select>
+            </div>
+            <div className="mb-4 flex gap-4">
+              <div>
+                <label className="block mb-1">Data Inicial</label>
+                <input type="date" className="border rounded p-2" value={dataIni} onChange={e => setDataIni(e.target.value)} />
+              </div>
+              <div>
+                <label className="block mb-1">Data Final</label>
+                <input type="date" className="border rounded p-2" value={dataFim} onChange={e => setDataFim(e.target.value)} />
+              </div>
+            </div>
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
-              onClick={() => setShowModal(true)}
+              type="submit"
+              className="w-full bg-blue-700 text-white font-bold py-3 rounded mt-4"
+              disabled={loading}
             >
-              Gerar Relatório
+              {loading ? "Exportando..." : "Exportar"}
             </button>
-          </div>
-          <TableGeneric
-            colunas={colunas}
-            dados={relatorios}
-            vazio="Nenhum relatório disponível."
-          />
-          <RelatoriosModal
-            open={showModal}
-            setOpen={setShowModal}
-            filtro={relatorioFiltro}
-          />
+          </form>
         </main>
       </div>
     </div>

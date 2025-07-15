@@ -3,28 +3,28 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import FinanceiroModal from "./FinanceiroModal";
-import { getLancamentos } from "./financeiroService";
+import { getLancamentos, excluirLancamento } from "./financeiroService";
 
 export default function FinanceiroPage() {
   const [lancamentos, setLancamentos] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [lancamentoEdit, setLancamentoEdit] = useState(null);
 
+  async function loadLancamentos() {
+    const data = await getLancamentos();
+    setLancamentos(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getLancamentos();
-      setLancamentos(data);
-    }
-    fetchData();
+    loadLancamentos();
   }, []);
 
   const colunas = [
-    { key: "data", label: "Data" },
     { key: "tipo", label: "Tipo" },
-    { key: "descricao", label: "Descrição" },
-    { key: "valor", label: "Valor" },
     { key: "categoria", label: "Categoria" },
-    { key: "status", label: "Status" },
+    { key: "valor", label: "Valor", render: (item) => "R$ " + Number(item.valor).toFixed(2) },
+    { key: "data", label: "Data", render: (item) => item.data ? item.data.split("T")[0] : "" },
+    { key: "observacao", label: "Observação" },
     {
       key: "acoes",
       label: "Ações",
@@ -39,11 +39,28 @@ export default function FinanceiroPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirLancamento(item.id);
+                loadLancamentos();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
   ];
+
+  // Cálculo do saldo (apenas visual)
+  const saldo =
+    lancamentos.reduce(
+      (total, l) => total + (l.tipo === "Receita" ? Number(l.valor) : -Number(l.valor)),
+      0
+    ) || 0;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -63,15 +80,22 @@ export default function FinanceiroPage() {
               Novo Lançamento
             </button>
           </div>
+          <div className="mb-6 bg-white p-4 rounded-lg shadow text-lg">
+            <strong>Saldo Atual: </strong>
+            <span className={saldo >= 0 ? "text-green-600" : "text-red-600"}>
+              R$ {saldo.toFixed(2)}
+            </span>
+          </div>
           <TableGeneric
             colunas={colunas}
             dados={lancamentos}
-            vazio="Nenhum lançamento financeiro cadastrado."
+            vazio="Nenhum lançamento registrado."
           />
           <FinanceiroModal
             open={showModal}
             setOpen={setShowModal}
             lancamento={lancamentoEdit}
+            onRefresh={loadLancamentos}
           />
         </main>
       </div>

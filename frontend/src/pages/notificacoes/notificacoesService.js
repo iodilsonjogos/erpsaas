@@ -1,11 +1,11 @@
-// /frontend/src/pages/notificacoes/notificacoesService.js
 import axios from "axios";
+const api = process.env.REACT_APP_API_URL;
 
-// Função para listar notificações internas
+// Listar notificações
 export async function getNotificacoes() {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("/api/notificacoes", {
+    const response = await axios.get(`${api}/notificacoes`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -14,4 +14,26 @@ export async function getNotificacoes() {
   }
 }
 
-// Adicione funções para enviar notificações internas
+// Criar notificação
+export async function criarNotificacao(data) {
+  const token = localStorage.getItem("token");
+  return axios.post(`${api}/notificacoes`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+// Editar notificação
+export async function editarNotificacao(id, data) {
+  const token = localStorage.getItem("token");
+  return axios.put(`${api}/notificacoes/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+// Excluir notificação
+export async function excluirNotificacao(id) {
+  const token = localStorage.getItem("token");
+  return axios.delete(`${api}/notificacoes/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}

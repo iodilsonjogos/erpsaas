@@ -3,26 +3,28 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import VendasModal from "./VendasModal";
-import { getVendas } from "./vendasService";
+import { getVendas, excluirVenda } from "./vendasService";
 
 export default function VendasPage() {
   const [vendas, setVendas] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [vendaEdit, setVendaEdit] = useState(null);
 
+  async function loadVendas() {
+    const data = await getVendas();
+    setVendas(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getVendas();
-      setVendas(data);
-    }
-    fetchData();
+    loadVendas();
   }, []);
 
   const colunas = [
+    { key: "id", label: "ID" },
     { key: "cliente_nome", label: "Cliente" },
-    { key: "data", label: "Data" },
-    { key: "valor_total", label: "Valor Total" },
+    { key: "valor_total", label: "Valor Total", render: (item) => "R$ " + Number(item.valor_total).toFixed(2) },
     { key: "status", label: "Status" },
+    { key: "data", label: "Data", render: (item) => item.data ? item.data.split("T")[0] : "" },
     {
       key: "acoes",
       label: "Ações",
@@ -35,9 +37,19 @@ export default function VendasPage() {
               setShowModal(true);
             }}
           >
-            Detalhes
+            Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirVenda(item.id);
+                loadVendas();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -64,12 +76,13 @@ export default function VendasPage() {
           <TableGeneric
             colunas={colunas}
             dados={vendas}
-            vazio="Nenhuma venda cadastrada."
+            vazio="Nenhuma venda registrada."
           />
           <VendasModal
             open={showModal}
             setOpen={setShowModal}
             venda={vendaEdit}
+            onRefresh={loadVendas}
           />
         </main>
       </div>

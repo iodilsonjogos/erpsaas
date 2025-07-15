@@ -3,27 +3,28 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import ProfissionaisModal from "./ProfissionaisModal";
-import { getProfissionais } from "./profissionaisService";
+import { getProfissionais, excluirProfissional } from "./profissionaisService";
 
 export default function ProfissionaisPage() {
   const [profissionais, setProfissionais] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [profissionalEdit, setProfissionalEdit] = useState(null);
 
+  async function loadProfissionais() {
+    const data = await getProfissionais();
+    setProfissionais(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getProfissionais();
-      setProfissionais(data);
-    }
-    fetchData();
+    loadProfissionais();
   }, []);
 
   const colunas = [
     { key: "nome", label: "Nome" },
-    { key: "email", label: "E-mail" },
-    { key: "telefone", label: "Telefone" },
+    { key: "email", label: "Email" },
     { key: "especialidade", label: "Especialidade" },
-    { key: "ativo", label: "Status", render: (item) => item.ativo ? "Ativo" : "Inativo" },
+    { key: "telefone", label: "Telefone" },
+    { key: "status", label: "Status", render: (item) => item.status ? "Ativo" : "Inativo" },
     {
       key: "acoes",
       label: "Ações",
@@ -38,7 +39,17 @@ export default function ProfissionaisPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirProfissional(item.id);
+                loadProfissionais();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -71,6 +82,7 @@ export default function ProfissionaisPage() {
             open={showModal}
             setOpen={setShowModal}
             profissional={profissionalEdit}
+            onRefresh={loadProfissionais}
           />
         </main>
       </div>

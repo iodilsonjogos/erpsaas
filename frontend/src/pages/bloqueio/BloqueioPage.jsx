@@ -3,26 +3,27 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import BloqueioModal from "./BloqueioModal";
-import { getBloqueios } from "./bloqueioService";
+import { getBloqueios, excluirBloqueio } from "./bloqueioService";
 
 export default function BloqueioPage() {
   const [bloqueios, setBloqueios] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [bloqueioEdit, setBloqueioEdit] = useState(null);
 
+  async function loadBloqueios() {
+    const data = await getBloqueios();
+    setBloqueios(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getBloqueios();
-      setBloqueios(data);
-    }
-    fetchData();
+    loadBloqueios();
   }, []);
 
   const colunas = [
-    { key: "data", label: "Data" },
-    { key: "hora_inicio", label: "Início" },
-    { key: "hora_fim", label: "Fim" },
-    { key: "profissional", label: "Profissional" },
+    { key: "profissional_nome", label: "Profissional" },
+    { key: "data", label: "Data", render: (item) => item.data ? item.data.split("T")[0] : "" },
+    { key: "hora_inicio", label: "Hora Início" },
+    { key: "hora_fim", label: "Hora Fim" },
     { key: "motivo", label: "Motivo" },
     {
       key: "acoes",
@@ -38,7 +39,17 @@ export default function BloqueioPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirBloqueio(item.id);
+                loadBloqueios();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -71,6 +82,7 @@ export default function BloqueioPage() {
             open={showModal}
             setOpen={setShowModal}
             bloqueio={bloqueioEdit}
+            onRefresh={loadBloqueios}
           />
         </main>
       </div>

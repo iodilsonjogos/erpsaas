@@ -3,29 +3,28 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import ComissoesModal from "./ComissoesModal";
-import { getComissoes } from "./comissoesService";
+import { getComissoes, excluirComissao } from "./comissoesService";
 
 export default function ComissoesPage() {
   const [comissoes, setComissoes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [comissaoEdit, setComissaoEdit] = useState(null);
 
+  async function loadComissoes() {
+    const data = await getComissoes();
+    setComissoes(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getComissoes();
-      setComissoes(data);
-    }
-    fetchData();
+    loadComissoes();
   }, []);
 
   const colunas = [
-    { key: "profissional", label: "Profissional" },
-    { key: "servico", label: "Serviço" },
-    { key: "valor_servico", label: "Valor do Serviço" },
-    { key: "percentual", label: "Comissão (%)" },
-    { key: "valor_comissao", label: "Valor da Comissão" },
-    { key: "data", label: "Data" },
-    { key: "status", label: "Status" },
+    { key: "profissional_nome", label: "Profissional" },
+    { key: "servico_nome", label: "Serviço" },
+    { key: "venda_id", label: "Venda" },
+    { key: "valor_comissao", label: "Valor Comissão", render: (item) => `R$ ${item.valor_comissao}` },
+    { key: "data", label: "Data", render: (item) => item.data ? item.data.split("T")[0] : "" },
     {
       key: "acoes",
       label: "Ações",
@@ -40,7 +39,17 @@ export default function ComissoesPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirComissao(item.id);
+                loadComissoes();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -73,6 +82,7 @@ export default function ComissoesPage() {
             open={showModal}
             setOpen={setShowModal}
             comissao={comissaoEdit}
+            onRefresh={loadComissoes}
           />
         </main>
       </div>

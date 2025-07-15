@@ -1,34 +1,54 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarFidelidade, editarFidelidade } from "./fidelidadeService";
 
-/**
- * Modal para criar ou editar programa/registro de fidelidade.
- * Props: open (boolean), setOpen (função), fidelidade (objeto ou null)
- */
-export default function FidelidadeModal({ open, setOpen, fidelidade }) {
+export default function FidelidadeModal({ open, setOpen, fidelidade, onRefresh }) {
   const [form, setForm] = useState({
     cliente_nome: "",
-    programa: "",
     pontos: "",
-    validade: "",
-    status: "Ativo",
+    resgatado: false,
+    descricao: "",
+    data: ""
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (fidelidade) setForm(fidelidade);
-    else setForm({ cliente_nome: "", programa: "", pontos: "", validade: "", status: "Ativo" });
+    if (fidelidade)
+      setForm({
+        ...fidelidade,
+        data: fidelidade.data ? fidelidade.data.split("T")[0] : ""
+      });
+    else setForm({
+      cliente_nome: "",
+      pontos: "",
+      resgatado: false,
+      descricao: "",
+      data: ""
+    });
   }, [fidelidade, open]);
 
   if (!open) return null;
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar/editar fidelidade (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (fidelidade && fidelidade.id) {
+        await editarFidelidade(fidelidade.id, form);
+      } else {
+        await criarFidelidade(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar fidelidade!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -38,19 +58,12 @@ export default function FidelidadeModal({ open, setOpen, fidelidade }) {
         onSubmit={handleSubmit}
       >
         <h2 className="text-lg font-bold mb-3">
-          {fidelidade ? "Editar Fidelidade" : "Novo Programa"}
+          {fidelidade ? "Editar Registro" : "Novo Registro"}
         </h2>
         <FormInput
           label="Cliente"
           name="cliente_nome"
-          value={form.cliente_nome}
-          onChange={handleChange}
-          required
-        />
-        <FormInput
-          label="Programa"
-          name="programa"
-          value={form.programa}
+          value={form.cliente_nome || ""}
           onChange={handleChange}
           required
         />
@@ -58,43 +71,48 @@ export default function FidelidadeModal({ open, setOpen, fidelidade }) {
           label="Pontos"
           name="pontos"
           type="number"
-          value={form.pontos}
+          value={form.pontos || ""}
+          onChange={handleChange}
+          required
+        />
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="resgatado"
+            checked={form.resgatado}
+            onChange={handleChange}
+            id="resgatado"
+          />
+          <label htmlFor="resgatado">Resgatado</label>
+        </div>
+        <FormInput
+          label="Descrição"
+          name="descricao"
+          value={form.descricao || ""}
           onChange={handleChange}
         />
         <FormInput
-          label="Validade"
-          name="validade"
+          label="Data"
+          name="data"
           type="date"
-          value={form.validade}
+          value={form.data || ""}
           onChange={handleChange}
         />
-        <div className="mb-3">
-          <label className="block mb-1">Status</label>
-          <select
-            className="w-full border rounded p-2"
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            required
-          >
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-            <option value="Expirado">Expirado</option>
-          </select>
-        </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

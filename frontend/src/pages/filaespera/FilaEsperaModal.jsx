@@ -1,29 +1,33 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarFilaEspera, editarFilaEspera } from "./filaesperaService";
 
-/**
- * Modal para criar ou editar entrada na fila de espera.
- * Props: open (boolean), setOpen (função), registro (objeto ou null)
- */
-export default function FilaEsperaModal({ open, setOpen, registro }) {
+export default function FilaEsperaModal({ open, setOpen, fila, onRefresh }) {
   const [form, setForm] = useState({
     cliente_nome: "",
+    profissional_nome: "",
+    servico_nome: "",
     data: "",
-    servico: "",
-    profissional: "",
-    status: "Aguardando",
+    hora: "",
+    status: "Aguardando"
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (registro) setForm(registro);
+    if (fila)
+      setForm({
+        ...fila,
+        data: fila.data ? fila.data.split("T")[0] : ""
+      });
     else setForm({
       cliente_nome: "",
+      profissional_nome: "",
+      servico_nome: "",
       data: "",
-      servico: "",
-      profissional: "",
+      hora: "",
       status: "Aguardando"
     });
-  }, [registro, open]);
+  }, [fila, open]);
 
   if (!open) return null;
 
@@ -31,10 +35,21 @@ export default function FilaEsperaModal({ open, setOpen, registro }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar/editar fila de espera (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (fila && fila.id) {
+        await editarFilaEspera(fila.id, form);
+      } else {
+        await criarFilaEspera(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar fila!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -44,62 +59,62 @@ export default function FilaEsperaModal({ open, setOpen, registro }) {
         onSubmit={handleSubmit}
       >
         <h2 className="text-lg font-bold mb-3">
-          {registro ? "Editar Encaixe" : "Novo Encaixe"}
+          {fila ? "Editar Registro" : "Novo Registro"}
         </h2>
         <FormInput
           label="Cliente"
           name="cliente_nome"
-          value={form.cliente_nome}
+          value={form.cliente_nome || ""}
           onChange={handleChange}
           required
+        />
+        <FormInput
+          label="Profissional"
+          name="profissional_nome"
+          value={form.profissional_nome || ""}
+          onChange={handleChange}
+        />
+        <FormInput
+          label="Serviço"
+          name="servico_nome"
+          value={form.servico_nome || ""}
+          onChange={handleChange}
         />
         <FormInput
           label="Data"
           name="data"
           type="date"
-          value={form.data}
-          onChange={handleChange}
-          required
-        />
-        <FormInput
-          label="Serviço"
-          name="servico"
-          value={form.servico}
+          value={form.data || ""}
           onChange={handleChange}
         />
         <FormInput
-          label="Profissional"
-          name="profissional"
-          value={form.profissional}
+          label="Hora"
+          name="hora"
+          type="time"
+          value={form.hora || ""}
           onChange={handleChange}
         />
-        <div className="mb-3">
-          <label className="block mb-1">Status</label>
-          <select
-            className="w-full border rounded p-2"
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            required
-          >
-            <option value="Aguardando">Aguardando</option>
-            <option value="Atendido">Atendido</option>
-            <option value="Cancelado">Cancelado</option>
-          </select>
-        </div>
+        <FormInput
+          label="Status"
+          name="status"
+          value={form.status || "Aguardando"}
+          onChange={handleChange}
+        />
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

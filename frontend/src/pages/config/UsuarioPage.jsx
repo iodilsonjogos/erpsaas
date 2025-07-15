@@ -18,9 +18,13 @@ export default function UsuarioPage() {
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSave = async () => {
-    const token = localStorage.getItem('token');
-    await axios.put(apiUrl, form, { headers: { Authorization: `Bearer ${token}` } });
-    alert('Dados atualizados!');
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(apiUrl, form, { headers: { Authorization: `Bearer ${token}` } });
+      alert('Dados atualizados!');
+    } catch {
+      alert('Erro ao atualizar usuário!');
+    }
   };
 
   if (loading) return <div>Carregando...</div>;

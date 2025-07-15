@@ -8,12 +8,13 @@ export default function ConfiguracoesPage() {
   const [config, setConfig] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  async function reloadConfig() {
+    const data = await getConfiguracoes();
+    setConfig(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getConfiguracoes();
-      setConfig(data);
-    }
-    fetchData();
+    reloadConfig();
   }, []);
 
   return (
@@ -51,7 +52,7 @@ export default function ConfiguracoesPage() {
             open={showModal}
             setOpen={setShowModal}
             config={config}
-            setConfig={setConfig}
+            setConfig={(novo) => { setConfig(novo); reloadConfig(); }}
           />
         </main>
       </div>

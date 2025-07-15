@@ -3,26 +3,25 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import TableGeneric from "../../components/TableGeneric";
 import ClientesModal from "./ClientesModal";
-import { getClientes } from "./clientesService";
+import { getClientes, excluirCliente } from "./clienteService";
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState([]);
   const [showModal, setShowModal] = useState(false);
-
-  // Para edição futuramente
   const [clienteEdit, setClienteEdit] = useState(null);
 
+  async function loadClientes() {
+    const data = await getClientes();
+    setClientes(data);
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getClientes();
-      setClientes(data);
-    }
-    fetchData();
+    loadClientes();
   }, []);
 
   const colunas = [
     { key: "nome", label: "Nome" },
-    { key: "email", label: "E-mail" },
+    { key: "email", label: "Email" },
     { key: "telefone", label: "Telefone" },
     {
       key: "acoes",
@@ -38,7 +37,17 @@ export default function ClientesPage() {
           >
             Editar
           </button>
-          <button className="text-red-600 hover:underline">Excluir</button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              if (window.confirm("Confirma exclusão?")) {
+                await excluirCliente(item.id);
+                loadClientes();
+              }
+            }}
+          >
+            Excluir
+          </button>
         </div>
       ),
     },
@@ -71,6 +80,7 @@ export default function ClientesPage() {
             open={showModal}
             setOpen={setShowModal}
             cliente={clienteEdit}
+            onRefresh={loadClientes}
           />
         </main>
       </div>

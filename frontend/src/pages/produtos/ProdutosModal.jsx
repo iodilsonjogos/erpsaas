@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarProduto, editarProduto } from "./produtosService";
 
-/**
- * Modal para criar ou editar serviço.
- * Props: open (boolean), setOpen (função), servico (objeto ou null)
- */
-export default function ServicosModal({ open, setOpen, servico }) {
+export default function ProdutosModal({ open, setOpen, produto, onRefresh }) {
   const [form, setForm] = useState({
     nome: "",
     categoria: "",
+    unidade: "",
     preco: "",
-    duracao: "",
-    ativo: true,
+    estoque: "",
+    status: true
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (servico) setForm(servico);
-    else setForm({ nome: "", categoria: "", preco: "", duracao: "", ativo: true });
-  }, [servico, open]);
+    if (produto) setForm(produto);
+    else setForm({ nome: "", categoria: "", unidade: "", preco: "", estoque: "", status: true });
+  }, [produto, open]);
 
   if (!open) return null;
 
@@ -26,10 +25,21 @@ export default function ServicosModal({ open, setOpen, servico }) {
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar ou editar (chamar serviço)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (produto && produto.id) {
+        await editarProduto(produto.id, form);
+      } else {
+        await criarProduto(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar produto!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -39,58 +49,67 @@ export default function ServicosModal({ open, setOpen, servico }) {
         onSubmit={handleSubmit}
       >
         <h2 className="text-lg font-bold mb-3">
-          {servico ? "Editar Serviço" : "Novo Serviço"}
+          {produto ? "Editar Produto" : "Novo Produto"}
         </h2>
         <FormInput
           label="Nome"
           name="nome"
-          value={form.nome}
+          value={form.nome || ""}
           onChange={handleChange}
           required
         />
         <FormInput
           label="Categoria"
           name="categoria"
-          value={form.category}
+          value={form.categoria || ""}
+          onChange={handleChange}
+        />
+        <FormInput
+          label="Unidade"
+          name="unidade"
+          value={form.unidade || ""}
           onChange={handleChange}
         />
         <FormInput
           label="Preço"
           name="preco"
           type="number"
-          value={form.preco}
+          value={form.preco || ""}
           onChange={handleChange}
+          required
         />
         <FormInput
-          label="Duração (min)"
-          name="duracao"
+          label="Estoque"
+          name="estoque"
           type="number"
-          value={form.duracao}
+          value={form.estoque || ""}
           onChange={handleChange}
         />
         <div className="mb-3 flex items-center gap-2">
           <input
             type="checkbox"
-            name="ativo"
-            checked={form.ativo}
+            name="status"
+            checked={form.status}
             onChange={handleChange}
-            id="ativo"
+            id="status"
           />
-          <label htmlFor="ativo">Ativo</label>
+          <label htmlFor="status">Ativo</label>
         </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>

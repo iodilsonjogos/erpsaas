@@ -1,31 +1,43 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
+import { criarEtapaOnboarding, editarEtapaOnboarding } from "./onboardingService";
 
-/**
- * Modal para criar ou editar dica/passo do onboarding.
- * Props: open (boolean), setOpen (função), step (objeto ou null)
- */
-export default function OnboardingModal({ open, setOpen, step }) {
+export default function OnboardingModal({ open, setOpen, etapa, onRefresh }) {
   const [form, setForm] = useState({
+    ordem: "",
     titulo: "",
-    descricao: ""
+    descricao: "",
+    completa: false
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (step) setForm(step);
-    else setForm({ titulo: "", descricao: "" });
-  }, [step, open]);
+    if (etapa) setForm(etapa);
+    else setForm({ ordem: "", titulo: "", descricao: "", completa: false });
+  }, [etapa, open]);
 
   if (!open) return null;
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Aqui vai lógica de salvar/editar passo ou dica (chamar service)
-    setOpen(false);
+    setLoading(true);
+    try {
+      if (etapa && etapa.id) {
+        await editarEtapaOnboarding(etapa.id, form);
+      } else {
+        await criarEtapaOnboarding(form);
+      }
+      if (onRefresh) onRefresh();
+      setOpen(false);
+    } catch {
+      alert("Erro ao salvar etapa!");
+    }
+    setLoading(false);
   }
 
   return (
@@ -35,38 +47,54 @@ export default function OnboardingModal({ open, setOpen, step }) {
         onSubmit={handleSubmit}
       >
         <h2 className="text-lg font-bold mb-3">
-          {step ? "Editar Passo/Dica" : "Novo Passo/Dica"}
+          {etapa ? "Editar Etapa" : "Nova Etapa"}
         </h2>
         <FormInput
-          label="Título"
-          name="titulo"
-          value={form.titulo}
+          label="Ordem"
+          name="ordem"
+          type="number"
+          value={form.ordem || ""}
           onChange={handleChange}
           required
         />
-        <div className="mb-3">
-          <label className="block mb-1">Descrição</label>
-          <textarea
-            className="w-full border rounded p-2"
-            name="descricao"
-            value={form.descricao}
+        <FormInput
+          label="Título"
+          name="titulo"
+          value={form.titulo || ""}
+          onChange={handleChange}
+          required
+        />
+        <FormInput
+          label="Descrição"
+          name="descricao"
+          value={form.descricao || ""}
+          onChange={handleChange}
+        />
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="completa"
+            checked={form.completa}
             onChange={handleChange}
-            required
+            id="completa"
           />
+          <label htmlFor="completa">Completa</label>
         </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => setOpen(false)}
+            disabled={loading}
           >
             Cancelar
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>
