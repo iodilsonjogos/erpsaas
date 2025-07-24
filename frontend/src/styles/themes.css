@@ -1,0 +1,57 @@
+/* 1. Empresarial/Eye-Friendly */
+.theme-default {
+  --bs-primary: #2563eb;
+  --bs-secondary: #64748b;
+  --bs-success: #2dd4bf;
+  --bs-body-bg: #f6f8fa;
+  --bs-body-color: #232323;
+  --bs-card-bg: #fff;
+  --bs-card-border: #e5e7eb;
+}
+
+/* 2. Feminino/Estética */
+.theme-feminino {
+  --bs-primary: #f472b6;
+  --bs-secondary: #4ade80;
+  --bs-success: #38bdf8;
+  --bs-info: #a5b4fc;
+  --bs-body-bg: #fffafa;
+  --bs-body-color: #414052;
+  --bs-card-bg: #fff;
+  --bs-card-border: #fbcfe8;
+}
+
+/* 3. Barber Shop */
+.theme-barbershop {
+  --bs-primary: #073b7b;
+  --bs-secondary: #dc2626;
+  --bs-success: #374151;
+  --bs-body-bg: #f3f4f6;
+  --bs-body-color: #18191a;
+  --bs-card-bg: #fff;
+  --bs-card-border: #d1d5db;
+  --bs-accent: #fff;
+  --bs-dark: #000;
+}
+
+/* Aplicação dos temas no body/container */
+body, .theme-container {
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+.card {
+  background: var(--bs-card-bg) !important;
+  border-color: var(--bs-card-border) !important;
+}
+.btn-primary {
+  background-color: var(--bs-primary) !important;
+  border-color: var(--bs-primary) !important;
+}
+.btn-secondary {
+  background-color: var(--bs-secondary) !important;
+  border-color: var(--bs-secondary) !important;
+}
+.btn-success {
+  background-color: var(--bs-success) !important;
+  border-color: var(--bs-success) !important;
+}

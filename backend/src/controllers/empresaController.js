@@ -19,7 +19,10 @@ const upload = multer({
 exports.get = async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, nome, cnpj, email, telefone, endereco, logo, confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao FROM empresas WHERE id = ?',
+      `SELECT 
+        id, nome, cnpj, email, telefone, endereco, logo, plano_id, status,
+        confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao
+      FROM empresas WHERE id = ?`,
       [req.user.empresa_id]
     );
     if (!rows.length) {
@@ -34,13 +37,20 @@ exports.get = async (req, res) => {
 // Atualizar empresa logada
 exports.update = async (req, res) => {
   try {
-    const { nome, cnpj, email, telefone, endereco, confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao } = req.body;
+    const {
+      nome, cnpj, email, telefone, endereco, plano_id, status,
+      confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao
+    } = req.body;
     await db.query(
       `UPDATE empresas SET 
-        nome = ?, cnpj = ?, email = ?, telefone = ?, endereco = ?, 
-        confirmacao_agendamento = ?, permite_upsell = ?, confirmacao_baixa = ?, tipo_comissao = ?, valor_comissao = ?
-      WHERE id = ?`,
-      [nome, cnpj, email, telefone, endereco, confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao, req.user.empresa_id]
+        nome=?, cnpj=?, email=?, telefone=?, endereco=?, plano_id=?, status=?, 
+        confirmacao_agendamento=?, permite_upsell=?, confirmacao_baixa=?, tipo_comissao=?, valor_comissao=?
+      WHERE id=?`,
+      [
+        nome, cnpj, email, telefone, endereco, plano_id, status,
+        confirmacao_agendamento, permite_upsell, confirmacao_baixa, tipo_comissao, valor_comissao,
+        req.user.empresa_id
+      ]
     );
     res.json({ message: 'Configuração da empresa atualizada com sucesso!' });
   } catch (error) {

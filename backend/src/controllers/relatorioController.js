@@ -4,16 +4,32 @@ const PDFDocument = require('pdfkit');
 
 // Relatório Vendas JSON simples
 exports.relatorioVendas = async (req, res) => {
-  const { data_ini, data_fim } = req.query;
-  const empresa_id = req.user.empresa_id;
-  const [vendas] = await db.query(
-    `SELECT v.id, v.data, c.nome as cliente_nome, v.total
-     FROM vendas v
-     LEFT JOIN clientes c ON v.cliente_id = c.id
-     WHERE v.empresa_id = ? AND v.data BETWEEN ? AND ?`,
-    [empresa_id, data_ini, data_fim]
-  );
-  res.json(vendas);
+  try {
+    // Espera receber dataInicio e dataFim via query params ou body
+    const { dataInicio, dataFim } = req.query;
+    const empresa_id = req.user.empresa_id;
+
+    if (!dataInicio || !dataFim) {
+      return res.status(400).json({ message: 'Informe dataInicio e dataFim no formato YYYY-MM-DD.' });
+    }
+
+    const [relatorio] = await db.query(
+      `SELECT 
+         v.id, 
+         v.data, 
+         c.nome as cliente_nome, 
+         v.valor_total
+       FROM vendas v
+       LEFT JOIN clientes c ON v.cliente_id = c.id
+       WHERE v.empresa_id = ? 
+         AND v.data BETWEEN ? AND ?
+       ORDER BY v.data DESC`,
+      [empresa_id, dataInicio, dataFim]
+    );
+  res.json(relatorio);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao gerar relatório de vendas', error: error.message });
+  }
 };
 
 // Relatório Financeiro JSON simples

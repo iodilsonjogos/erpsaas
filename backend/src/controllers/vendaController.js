@@ -1,60 +1,86 @@
+
 const db = require('../config/db');
 
-// Listar vendas (com itens)
+// Listar vendas com cliente
 exports.listar = async (req, res) => {
-  const [vendas] = await db.query(
-    'SELECT v.id, v.empresa_id, v.cliente_id, v.data, v.total, v.observacoes, v.created_at, c.nome as cliente_nome ' +
-    'FROM vendas v LEFT JOIN clientes c ON v.cliente_id = c.id'
-  );
-  for (let venda of vendas) {
-    const [itens] = await db.query(
-      'SELECT vi.id, vi.produto_id, p.nome as produto_nome, vi.quantidade, vi.preco_unitario, vi.subtotal ' +
-      'FROM venda_itens vi LEFT JOIN produtos p ON vi.produto_id = p.id WHERE vi.venda_id=?', [venda.id]
+  try {
+    const [vendas] = await db.query(
+      `SELECT 
+         v.id, 
+         v.empresa_id, 
+         v.cliente_id, 
+         v.data, 
+         v.valor_total, 
+         v.observacao, 
+         c.nome as cliente_nome 
+       FROM vendas v
+       LEFT JOIN clientes c ON v.cliente_id = c.id`
     );
-    venda.itens = itens;
+    res.json(vendas);
+  } catch (err) {
+    console.error('Erro ao listar vendas:', err);
+    res.status(500).json({ mensagem: 'Erro ao listar vendas' });
   }
-  res.json(vendas);
 };
 
-// Criar venda
+// Criar venda com itens
 exports.criar = async (req, res) => {
-  const { empresa_id, cliente_id, data, observacoes, itens } = req.body;
-  // Calcula total
-  let total = 0;
-  for (let item of itens) {
-    item.subtotal = parseFloat(item.quantidade) * parseFloat(item.preco_unitario);
-    total += item.subtotal;
-  }
-  // Cria venda
-  const [result] = await db.query(
-    'INSERT INTO vendas (empresa_id, cliente_id, data, total, observacoes) VALUES (?, ?, ?, ?, ?)',
-    [empresa_id, cliente_id, data, total, observacoes]
-  );
-  const venda_id = result.insertId;
-  // Cria itens
-  for (let item of itens) {
-    await db.query(
-      'INSERT INTO venda_itens (venda_id, produto_id, quantidade, preco_unitario, subtotal) VALUES (?, ?, ?, ?, ?)',
-      [venda_id, item.produto_id, item.quantidade, item.preco_unitario, item.subtotal]
+  try {
+    const { empresa_id, cliente_id, data, observacao, itens } = req.body;
+    let valor_total = 0;
+
+    for (let item of itens) {
+      item.subtotal = parseFloat(item.quantidade) * parseFloat(item.preco_unitario);
+      valor_total += item.subtotal;
+    }
+
+    const [result] = await db.query(
+      'INSERT INTO vendas (empresa_id, cliente_id, data, valor_total, observacao) VALUES (?, ?, ?, ?, ?)',
+      [empresa_id, cliente_id, data, valor_total, observacao]
     );
+
+    const venda_id = result.insertId;
+
+    for (let item of itens) {
+      await db.query(
+        'INSERT INTO venda_itens (venda_id, produto_id, quantidade, valor) VALUES (?, ?, ?, ?)',
+        [venda_id, item.produto_id, item.quantidade, item.subtotal]
+      );
+    }
+
+    res.status(201).json({ mensagem: "Venda cadastrada com sucesso!" });
+  } catch (err) {
+    console.error('Erro ao criar venda:', err);
+    res.status(500).json({ mensagem: 'Erro ao cadastrar venda' });
   }
-  res.status(201).json({ mensagem: "Venda cadastrada com sucesso!" });
 };
 
-// Atualizar venda (apenas dados principais)
+// Atualizar venda (não atualiza itens)
 exports.atualizar = async (req, res) => {
-  const { id } = req.params;
-  const { empresa_id, cliente_id, data, observacoes } = req.body;
-  await db.query(
-    'UPDATE vendas SET empresa_id=?, cliente_id=?, data=?, observacoes=? WHERE id=?',
-    [empresa_id, cliente_id, data, observacoes, id]
-  );
-  res.json({ mensagem: "Venda atualizada com sucesso!" });
+  try {
+    const { id } = req.params;
+    const { empresa_id, cliente_id, data, observacao } = req.body;
+
+    await db.query(
+      'UPDATE vendas SET empresa_id=?, cliente_id=?, data=?, observacao=? WHERE id=?',
+      [empresa_id, cliente_id, data, observacao, id]
+    );
+
+    res.json({ mensagem: "Venda atualizada com sucesso!" });
+  } catch (err) {
+    console.error('Erro ao atualizar venda:', err);
+    res.status(500).json({ mensagem: "Erro ao atualizar venda" });
+  }
 };
 
-// Excluir venda (deleta também os itens pelo ON DELETE CASCADE)
+// Excluir venda
 exports.deletar = async (req, res) => {
-  const { id } = req.params;
-  await db.query('DELETE FROM vendas WHERE id=?', [id]);
-  res.json({ mensagem: "Venda excluída com sucesso!" });
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM vendas WHERE id=?', [id]);
+    res.json({ mensagem: "Venda excluída com sucesso!" });
+  } catch (err) {
+    console.error('Erro ao excluir venda:', err);
+    res.status(500).json({ mensagem: "Erro ao excluir venda" });
+  }
 };

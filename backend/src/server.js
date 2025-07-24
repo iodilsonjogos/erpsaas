@@ -1,7 +1,7 @@
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
-
+const authRoutes = require('./routes/authRoutes');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -9,6 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api/auth', authRoutes);
 // Rotas
 app.use('/api/agenda', require('./routes/agendaRoutes'));
 app.use('/api/clientes', require('./routes/clienteRoutes'));
@@ -23,6 +24,8 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/agendamento-online', require('./routes/agendamentoOnlineRoutes'));
+app.use('/api/onboarding', require('./routes/onboardingRoutes'));
+
 
 
 // Healthcheck
