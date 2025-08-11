@@ -5,6 +5,7 @@ const api = process.env.REACT_APP_API_URL;
 export async function getDashboardResumo() {
   try {
     const token = localStorage.getItem("token");
+
     const res = await axios.get(`${api}/dashboard`, {
       headers: { Authorization: `Bearer ${token}` }
     });

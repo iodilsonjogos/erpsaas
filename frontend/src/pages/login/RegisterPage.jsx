@@ -36,7 +36,7 @@ export default function RegisterPage() {
       const { data } = await axios.post("http://localhost:4000/api/auth/register", form);
       // Salva token, navega para onboarding
       localStorage.setItem("token", data.token);
-      navigate("/onboarding/welcome");
+      navigate("/onboarding/WelcomeOnboarding");
     } catch (err) {
       setErro(err.response?.data?.mensagem || "Erro ao cadastrar.");
     }

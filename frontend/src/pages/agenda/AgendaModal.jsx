@@ -1,28 +1,52 @@
 import React, { useState, useEffect } from "react";
 import FormInput from "../../components/FormInput";
 import { criarAgendamento, editarAgendamento } from "./agendaService";
+import axios from "axios";
 
 export default function AgendaModal({ open, setOpen, agendamento, onRefresh }) {
   const [form, setForm] = useState({
-    cliente_nome: "",
-    profissional_nome: "",
-    servico_nome: "",
+    cliente_id: "",
+    profissional_id: "",
+    servico_id: "",
     data: "",
     hora: "",
     status: "Pendente"
   });
+  const [clientes, setClientes] = useState([]);
+  const [profissionais, setProfissionais] = useState([]);
+  const [servicos, setServicos] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchAll() {
+      const token = localStorage.getItem("token");
+      const api = process.env.REACT_APP_API_URL;
+      const [cli, prof, serv] = await Promise.all([
+        axios.get(`${api}/clientes`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${api}/profissionais`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${api}/servicos`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      setClientes(cli.data);
+      setProfissionais(prof.data);
+      setServicos(serv.data);
+    }
+    if (open) fetchAll();
+  }, [open]);
 
   useEffect(() => {
     if (agendamento)
       setForm({
-        ...agendamento,
-        data: agendamento.data ? agendamento.data.split("T")[0] : ""
+        cliente_id: agendamento.cliente_id || "",
+        profissional_id: agendamento.profissional_id || "",
+        servico_id: agendamento.servico_id || "",
+        data: agendamento.data ? agendamento.data.split("T")[0] : "",
+        hora: agendamento.hora || "",
+        status: agendamento.status || "Pendente",
       });
     else setForm({
-      cliente_nome: "",
-      profissional_nome: "",
-      servico_nome: "",
+      cliente_id: "",
+      profissional_id: "",
+      servico_id: "",
       data: "",
       hora: "",
       status: "Pendente"
@@ -61,27 +85,48 @@ export default function AgendaModal({ open, setOpen, agendamento, onRefresh }) {
         <h2 className="text-lg font-bold mb-3">
           {agendamento ? "Editar Agendamento" : "Novo Agendamento"}
         </h2>
-        <FormInput
-          label="Cliente"
-          name="cliente_nome"
-          value={form.cliente_nome || ""}
+        {/* Cliente */}
+        <label className="block mb-1">Cliente</label>
+        <select
+          className="form-select mb-3"
+          name="cliente_id"
+          value={form.cliente_id}
           onChange={handleChange}
           required
-        />
-        <FormInput
-          label="Profissional"
-          name="profissional_nome"
-          value={form.profissional_nome || ""}
+        >
+          <option value="">Selecione o cliente</option>
+          {clientes.map((c) => (
+            <option value={c.id} key={c.id}>{c.nome}</option>
+          ))}
+        </select>
+        {/* Profissional */}
+        <label className="block mb-1">Profissional</label>
+        <select
+          className="form-select mb-3"
+          name="profissional_id"
+          value={form.profissional_id}
           onChange={handleChange}
           required
-        />
-        <FormInput
-          label="Serviço"
-          name="servico_nome"
-          value={form.servico_nome || ""}
+        >
+          <option value="">Selecione o profissional</option>
+          {profissionais.map((p) => (
+            <option value={p.id} key={p.id}>{p.nome}</option>
+          ))}
+        </select>
+        {/* Serviço */}
+        <label className="block mb-1">Serviço</label>
+        <select
+          className="form-select mb-3"
+          name="servico_id"
+          value={form.servico_id}
           onChange={handleChange}
           required
-        />
+        >
+          <option value="">Selecione o serviço</option>
+          {servicos.map((s) => (
+            <option value={s.id} key={s.id}>{s.nome}</option>
+          ))}
+        </select>
         <FormInput
           label="Data"
           name="data"

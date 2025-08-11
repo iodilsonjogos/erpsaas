@@ -1,16 +1,19 @@
 const db = require('../config/db');
 
-// Listar lançamentos financeiros
+// Listar lançamentos financeiros (SOMENTE da empresa do usuário)
 exports.listar = async (req, res) => {
   const [lancamentos] = await db.query(
-    `SELECT id, empresa_id, tipo, categoria, descricao, valor, data, observacoes, created_at FROM financeiro`
+    `SELECT id, empresa_id, tipo, categoria, descricao, valor, data, observacoes, created_at 
+     FROM financeiro WHERE empresa_id = ?`,
+    [req.user.empresa_id]
   );
   res.json(lancamentos);
 };
 
 // Criar lançamento financeiro
 exports.criar = async (req, res) => {
-  const { empresa_id, tipo, categoria, descricao, valor, data, observacoes } = req.body;
+  const empresa_id = req.user.empresa_id; // CORRETO: sempre via JWT
+  const { tipo, categoria, descricao, valor, data, observacoes } = req.body;
   await db.query(
     `INSERT INTO financeiro (empresa_id, tipo, categoria, descricao, valor, data, observacoes)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -19,20 +22,22 @@ exports.criar = async (req, res) => {
   res.status(201).json({ mensagem: "Lançamento financeiro cadastrado com sucesso!" });
 };
 
-// Atualizar lançamento
+// Atualizar lançamento financeiro (SÓ DA PRÓPRIA EMPRESA)
 exports.atualizar = async (req, res) => {
   const { id } = req.params;
-  const { empresa_id, tipo, categoria, descricao, valor, data, observacoes } = req.body;
+  const empresa_id = req.user.empresa_id;
+  const { tipo, categoria, descricao, valor, data, observacoes } = req.body;
   await db.query(
-    `UPDATE financeiro SET empresa_id=?, tipo=?, categoria=?, descricao=?, valor=?, data=?, observacoes=? WHERE id=?`,
-    [empresa_id, tipo, categoria, descricao, valor, data, observacoes, id]
+    `UPDATE financeiro SET tipo=?, categoria=?, descricao=?, valor=?, data=?, observacoes=? WHERE id=? AND empresa_id=?`,
+    [tipo, categoria, descricao, valor, data, observacoes, id, empresa_id]
   );
   res.json({ mensagem: "Lançamento financeiro atualizado com sucesso!" });
 };
 
-// Excluir lançamento
+// Excluir lançamento financeiro (SÓ DA PRÓPRIA EMPRESA)
 exports.deletar = async (req, res) => {
   const { id } = req.params;
-  await db.query(`DELETE FROM financeiro WHERE id=?`, [id]);
+  const empresa_id = req.user.empresa_id;
+  await db.query(`DELETE FROM financeiro WHERE id=? AND empresa_id=?`, [id, empresa_id]);
   res.json({ mensagem: "Lançamento financeiro excluído com sucesso!" });
 };

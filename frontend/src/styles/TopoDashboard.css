@@ -1,0 +1,102 @@
+/* src/styles/TopoDashboard.css */
+.topo-dashboard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 49px;
+  background: #fff;
+  border-bottom: 1px solid #e6e8ec;
+  display: flex;
+  align-items: center;
+  z-index: 1200;
+  font-size: 15px;
+}
+
+.topo-dashboard__left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 200px;
+  gap: 12px;
+}
+
+.topo-dashboard__logo {
+  width: 34px;
+  height: 34px;
+  margin-right: 4px;
+}
+
+.topo-dashboard__sistema {
+  font-weight: bold;
+  margin-right: 18px;
+  font-size: 17px;
+  color: #2784c9;
+}
+
+.topo-dashboard__menu-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  margin-left: 6px;
+  margin-right: 10px;
+}
+
+.topo-dashboard__center {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 16px;
+  color: #34495e;
+}
+
+.topo-dashboard__empresa {
+  font-size: 18px;
+  color: #1b5e93;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.topo-dashboard__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+  justify-content: flex-end;
+}
+
+.topo-dashboard__notify {
+  background: none;
+  border: none;
+  padding: 0 6px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.topo-dashboard__user {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  gap: 6px;
+  padding: 2px 4px;
+}
+
+.topo-dashboard__avatar {
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  background: #eee;
+}
+
+.topo-dashboard__user-nome {
+  font-weight: 500;
+  font-size: 15px;
+  color: #2c3e50;
+  margin-left: 2px;
+}

@@ -3,7 +3,6 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import ConfiguracoesModal from "./ConfiguracoesModal";
 import { getConfiguracoes } from "./configuracoesService";
-import { useState, useEffect } from "react";
 
 const temas = [
   { value: "theme-default", label: "Empresarial (Conforto Visual)" },
@@ -11,42 +10,12 @@ const temas = [
   { value: "theme-barbershop", label: "Barber Shop (Azul, Vermelho, Preto, Branco)" }
 ];
 
-export default function ConfiguracoesEmpresa() {
-  const [tema, setTema] = useState(localStorage.getItem("theme") || "theme-default");
-
-  useEffect(() => {
-    document.body.className = tema;
-  }, [tema]);
-
-  function handleChange(e) {
-    setTema(e.target.value);
-    localStorage.setItem("theme", e.target.value);
-    // Aqui você pode chamar uma API para salvar o tema no backend, se desejar
-    // await empresaService.atualizarTema(e.target.value);
-  }
-
-  return (
-    <div className="card p-4 shadow-sm">
-      <h4 className="mb-3">Tema visual do sistema</h4>
-      <div className="mb-3">
-        <label className="form-label">Escolha o tema visual:</label>
-        <select className="form-select" value={tema} onChange={handleChange}>
-          {temas.map(t => <option value={t.value} key={t.value}>{t.label}</option>)}
-        </select>
-      </div>
-      <div>
-        <span className="badge bg-primary me-2">Exemplo cor primária</span>
-        <span className="badge bg-secondary me-2">Cor secundária</span>
-        <span className="badge bg-success">Destaque</span>
-      </div>
-    </div>
-  );
-}
-
 export default function ConfiguracoesPage() {
   const [config, setConfig] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [tema, setTema] = useState(localStorage.getItem("theme") || "theme-default");
 
+  // Carrega configurações da empresa
   async function reloadConfig() {
     const data = await getConfiguracoes();
     setConfig(data);
@@ -55,6 +24,17 @@ export default function ConfiguracoesPage() {
   useEffect(() => {
     reloadConfig();
   }, []);
+
+  useEffect(() => {
+    document.body.className = tema;
+    localStorage.setItem("theme", tema);
+  }, [tema]);
+
+  function handleChangeTema(e) {
+    setTema(e.target.value);
+    localStorage.setItem("theme", e.target.value);
+    // Aqui você pode integrar com backend depois se quiser salvar o tema no banco
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -71,6 +51,24 @@ export default function ConfiguracoesPage() {
               Editar Configuração
             </button>
           </div>
+
+          {/* Seletor de Tema */}
+          <div className="card p-4 shadow-sm mb-5 max-w-md">
+            <h4 className="mb-3">Tema visual do sistema</h4>
+            <div className="mb-3">
+              <label className="form-label">Escolha o tema visual:</label>
+              <select className="form-select" value={tema} onChange={handleChangeTema}>
+                {temas.map(t => <option value={t.value} key={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <span className="badge bg-primary me-2">Exemplo cor primária</span>
+              <span className="badge bg-secondary me-2">Cor secundária</span>
+              <span className="badge bg-success">Destaque</span>
+            </div>
+          </div>
+
+          {/* Exibe as configurações atuais */}
           {config ? (
             <div className="bg-white rounded-xl shadow p-6 space-y-2">
               <div><strong>Nome:</strong> {config.nome}</div>
@@ -87,6 +85,7 @@ export default function ConfiguracoesPage() {
           ) : (
             <div className="text-gray-500">Carregando configurações...</div>
           )}
+
           <ConfiguracoesModal
             open={showModal}
             setOpen={setShowModal}

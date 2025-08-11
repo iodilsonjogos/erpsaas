@@ -10,6 +10,7 @@
   "main": "index.js",
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.17",
+    "@fullcalendar/interaction": "^6.1.18",
     "@fullcalendar/react": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
     "acorn": "^8.15.0",
@@ -21,6 +22,7 @@
     "balanced-match": "^1.0.2",
     "bcryptjs": "^3.0.2",
     "bootstrap": "^5.3.7",
+    "bootstrap-icons": "^1.13.1",
     "brace-expansion": "^1.1.12",
     "callsites": "^3.1.0",
     "chalk": "^4.1.2",

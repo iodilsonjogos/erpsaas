@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "../../components/Sidebar";
-import Header from "../../components/Header";
 import { getDashboardResumo, getVendasMes, getProdutosTop } from "./dashboardservice";
 import DashboardModal from "./DashboardModal";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
@@ -60,10 +58,6 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Header />
         <main className="p-6">
           <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
           {/* Cards principais */}
@@ -126,8 +120,7 @@ export default function DashboardPage() {
             {modalContent}
           </DashboardModal>
         </main>
-      </div>
-    </div>
+
   );
 }
 

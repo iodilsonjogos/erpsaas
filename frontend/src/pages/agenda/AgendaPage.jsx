@@ -20,9 +20,9 @@ export default function AgendaPage() {
   }, []);
 
   const colunas = [
-    { key: "cliente_nome", label: "Cliente" },
-    { key: "profissional_nome", label: "Profissional" },
-    { key: "servico_nome", label: "Serviço" },
+    { key: "cliente", label: "Cliente" },
+    { key: "profissional", label: "Profissional" },
+    { key: "servico", label: "Serviço" },
     { key: "data", label: "Data", render: (item) => item.data ? item.data.split("T")[0] : "" },
     { key: "hora", label: "Hora" },
     { key: "status", label: "Status" },
