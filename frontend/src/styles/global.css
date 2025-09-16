@@ -323,3 +323,19 @@ body {
 .card .d-flex.justify-content-between.align-items-center.mb-1 > button {
   font-size: 0.97em;
 }
+/* Botões de ação no card de agendamento */
+.btn-excluir {
+  background-color: #dc2626; /* vermelho suave */
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-excluir:hover {
+  background-color: #b91c1c; /* vermelho mais escuro no hover */
+}

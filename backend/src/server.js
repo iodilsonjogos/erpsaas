@@ -1,7 +1,9 @@
+/*import homeRoutes from './routes/homeRoutes.js';*/
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const authRoutes = require('./routes/authRoutes');
+const homeRoutes = require('./routes/homeRoutes');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -10,6 +12,8 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/auth', authRoutes);
+app.use('/api/home', homeRoutes);
+app.use('/home', homeRoutes);
 // Rotas
 app.use('/api/agenda', require('./routes/agendaRoutes'));
 app.use('/api/clientes', require('./routes/clienteRoutes'));
@@ -25,6 +29,7 @@ app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/agendamento-online', require('./routes/agendamentoOnlineRoutes'));
 app.use('/api/onboarding', require('./routes/onboardingRoutes'));
+app.use('/api', require('./routes/homeRoutes'));
 
 
 

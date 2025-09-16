@@ -32,8 +32,13 @@ export async function editarAgendamento(id, data) {
 
 // Excluir agendamento
 export async function excluirAgendamento(id) {
-  const token = localStorage.getItem("token");
-  return axios.delete(`${api}/agenda/${id}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.delete(`${api}/agenda/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "Erro ao excluir agendamento.";
+  }
 }

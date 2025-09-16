@@ -1,89 +1,56 @@
 import axios from "axios";
-const api = process.env.REACT_APP_API_URL;
+/*const api = process.env.REACT_APP_API_URL;*/
+import api from '../../services/api';
 
-// Resumo dos indicadores principais do usuário (não admin)
-export async function getResumoHome() {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await axios.get(`${api}/home`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return res.data;
-  } catch {
-    return {};
-  }
-}
+// Token JWT
+const getAuth = () => ({
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+});
 
-// Próximos atendimentos do usuário
-export async function getProximosAtendimentos() {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await axios.get(`${api}/home/proximos-agendamentos`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return res.data;
-  } catch {
-    return [];
-  }
-}
+// Profissionais ativos
+export const getProfissionaisAtivos = async () => {
+  const response = await api.get(`/home/profissionais`, getAuth());
+  return response.data;
+};
 
-/**
- * ===== Funções adicionadas para a HomePage.jsx =====
- * Essas funções estão mockadas (dados fake), prontos para substituir pelas rotas reais da sua API depois!
- */
+// Agendamentos do dia
+export const getAgendamentosDia = async (dataAgendada) => {
+  const response = await api.get(`/home/agendamentos-dia`, {
+    ...getAuth(),
+    params: { data: dataAgendada },
+  });
+  return response.data;
+};
 
-// Profissionais ativos (mock)
-export async function getProfissionaisAtivos() {
-  // Quando tiver a rota real, basta substituir pelo axios.get() correto!
-  return [
-    {
-      id: 1,
-      nome: "Maria Silva",
-      avatar: null,
-      agendamentos_hoje: 6
-    },
-    {
-      id: 2,
-      nome: "João Souza",
-      avatar: null,
-      agendamentos_hoje: 3
-    }
-  ];
-}
+// Datas especiais
+export const getDatasEspeciais = async () => {
+  const response = await api.get(`/home/datas-especiais`, getAuth());
+  return response.data;
+};
 
-// Agendamentos do dia (mock)
-export async function getAgendamentosDia() {
-  // Substitua por chamada real se já tiver endpoint
-  return [
-    {
-      id: 1,
-      title: "Corte Feminino - Maria Silva",
-      start: new Date().toISOString().split("T")[0] + "T09:30:00",
-      end: new Date().toISOString().split("T")[0] + "T10:00:00"
-    },
-    {
-      id: 2,
-      title: "Barba - João Souza",
-      start: new Date().toISOString().split("T")[0] + "T10:30:00",
-      end: new Date().toISOString().split("T")[0] + "T11:00:00"
-    }
-  ];
-}
 
-// Datas especiais (mock)
-export async function getDatasEspeciais() {
-  // Depois troque por rota real (ex: aniversários, feriados, etc)
-  return [
-    { nome: "Aniversário da Ana", data: "05/08" },
-    { nome: "Feriado Nacional", data: "07/09" }
-  ];
-}
+// Buscar a lista de espera
+export const getListaEspera = async () => {
+  const response = await api.get('/home/lista-espera');
+  return response.data;
+};
 
-// Lista de espera (mock)
-export async function getListaEspera() {
-  // Substitua por sua rota real!
-  return [
-    { nome: "Pedro Borges", tempo_espera: "15 min" },
-    { nome: "Paula Lima", tempo_espera: "7 min" }
-  ];
-}
+// Adicionar um novo cliente na lista de espera
+export const adicionarListaEspera = async (dados) => {
+  const response = await api.post('/home/lista-espera', dados);
+  return response.data;
+};
+
+// Confirmar um cliente como atendido
+export const confirmarListaEspera = async (id) => {
+  const response = await api.put(`/home/lista-espera/${id}/confirmar`);
+  return response.data;
+};
+
+// Excluir um cliente da lista de espera
+export const excluirListaEspera = async (id) => {
+  const response = await api.delete(`/home/lista-espera/${id}`);
+  return response.data;
+};
