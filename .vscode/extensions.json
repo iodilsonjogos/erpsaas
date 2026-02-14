@@ -1,12 +1,14 @@
 {
   "recommendations": [
-    "bmewburn.vscode-intelephense-client",    // PHP Intelephense
-    "dbaeumer.vscode-eslint",                 // ESLint
-    "esbenp.prettier-vscode",                 // Prettier
-    "rangav.vscode-thunder-client",           // Thunder Client
-    "mtxr.sqltools",                          // SQLTools
-    "formulahendry.vscode-mysql",             // MySQL
-    "ritwickdey.liveserver",                  // Live Server
-    "github.vscode-pull-request-github"       // GitHub integração opcional
+    "xdebug.php-debug", // PHP Debug
+    "bmewburn.vscode-intelephense-client", // PHP Intelephense
+    "dbaeumer.vscode-eslint", // ESLint
+    "esbenp.prettier-vscode", // Prettier
+    "rangav.vscode-thunder-client", // Thunder Client
+    "mtxr.sqltools", // SQLTools
+    "formulahendry.vscode-mysql", // MySQL
+    "ritwickdey.liveserver", // Live Server
+    "usernamehw.errorlens", // Error Lens
+    "github.vscode-pull-request-github" // GitHub integração opcional
   ]
 }

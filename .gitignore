@@ -6,6 +6,7 @@ vendor/
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+!.vscode/launch.json
 # Configs de ambiente
 .env
 *.env
@@ -24,7 +25,6 @@ build/
 # Ignorar uploads (se não quiser versionar imagens do cliente)
 uploads/
 # Ignorar a própria pasta do Git (por segurança)
-.git/
 /nbproject/
 .idea/
 /.vscode/
