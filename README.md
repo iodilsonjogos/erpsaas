@@ -16,6 +16,4 @@ Sistema de gestão web para estética, beleza, bem-estar e serviços.
 2. Configure o banco de dados em `include/conexao.php`
 3. Inicie o servidor local (XAMPP ou WAMP)
 4. `npm install` para instalar dependências JS (opcional)
-5. Acesse em http://localhost/erpsaas
-
----
+5. Acesse em http://localhost/mrg

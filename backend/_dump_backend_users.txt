@@ -1,0 +1,646 @@
+﻿==== DUMP BACKEND USERS ====
+
+
+===== FILE: C:\xampp\htdocs\Mgr\backend\src\routes\usuarioRoutes.js =====
+
+const express = require('express');
+const router = express.Router();
+const usuarioCtrl = require('../controllers/usuarioController');
+const auth = require('../middlewares/auth');
+const acl = require('../middlewares/acl');
+/**
+ * @swagger
+ * tags:
+ *   name: Usuários
+ *   description: Endpoints de Usuários
+ */
+// Login de usuário (padrão ERP SaaS)
+/**
+ * @swagger
+ * /usuarios/login:
+ *   post:
+ *     summary: Login do usuário
+ *     tags: [Usuários]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string }
+ *               senha: { type: string }
+ *     responses:
+ *       200:
+ *         description: Login efetuado com sucesso e token retornado
+ */
+router.post('/login', usuarioCtrl.login);
+
+// Registro público – NOVA EMPRESA E USUÁRIO ADMIN (trial 5 dias)
+/**
+ * @swagger
+ * /usuarios/register:
+ *   post:
+ *     summary: Registro público (criação de empresa e admin trial)
+ *     tags: [Usuários]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome: { type: string }
+ *               email: { type: string }
+ *               senha: { type: string }
+ *               tipo: { type: string }
+ *               cnpj: { type: string }
+ *               cpf: { type: string }
+ *               telefone: { type: string }
+ *               segmento: { type: string }
+ *               empresa: { type: string }
+ *     responses:
+ *       201:
+ *         description: Empresa e usuário admin criados com sucesso
+ */
+router.post('/register', usuarioCtrl.registrarPublico);
+
+/**
+ * @swagger
+ * /usuarios/recuperar-senha:
+ *   post:
+ *     summary: Recuperação de senha
+ *     tags: [Usuários]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string }
+ *     responses:
+ *       200:
+ *         description: Se o e-mail existir, link de redefinição enviado
+ */
+router.post('/recuperar-senha', usuarioCtrl.recuperarSenha);
+// Redefinir senha (pública)
+/**
+ * @swagger
+ * /usuarios/resetar-senha/{token}:
+ *   post:
+ *     summary: Redefinir senha com token
+ *     tags: [Usuários]
+ *     parameters:
+ *       - name: token
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               novaSenha: { type: string }
+ *     responses:
+ *       200:
+ *         description: Senha redefinida com sucesso
+ */
+router.post('/resetar-senha/:token', usuarioCtrl.resetarSenha);
+
+// Rotas protegidas (apenas admin logado)
+/**
+ * @swagger
+ * /usuarios:
+ *   post:
+ *     summary: Criar usuário (apenas admin autenticado)
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome: { type: string }
+ *               email: { type: string }
+ *               senha: { type: string }
+ *               perfil: { type: string }
+ *     responses:
+ *       201:
+ *         description: Usuário criado com sucesso
+ */
+router.post('/', auth, acl(['admin']), usuarioCtrl.criar);
+
+/**
+ * @swagger
+ * /usuarios:
+ *   get:
+ *     summary: Listar todos os usuários da empresa
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de usuários retornada
+ */
+router.get('/', auth, acl(['admin']), usuarioCtrl.listar);
+
+/**
+ * @swagger
+ * /usuarios/{id}:
+ *   get:
+ *     summary: Detalhar usuário por ID
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Usuário detalhado
+ */
+router.get('/:id', auth, acl(['admin']), usuarioCtrl.detalhar);
+/**
+ * @swagger
+ * /usuarios/{id}:
+ *   put:
+ *     summary: Atualizar usuário
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome: { type: string }
+ *               email: { type: string }
+ *               senha: { type: string }
+ *               perfil: { type: string }
+ *               status: { type: string }
+ *     responses:
+ *       200:
+ *         description: Usuário atualizado com sucesso
+ */
+router.put('/:id', auth, acl(['admin']), usuarioCtrl.atualizar);
+/**
+ * @swagger
+ * /usuarios/{id}:
+ *   delete:
+ *     summary: Deletar usuário
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Usuário excluído com sucesso
+ */
+router.delete('/:id', auth, acl(['admin']), usuarioCtrl.deletar);
+
+module.exports = router;
+
+
+===== FILE: C:\xampp\htdocs\Mgr\backend\src\controllers\usuarioController.js =====
+
+const db = require('../config/db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// Listar todos os usuários da empresa
+exports.listar = async (req, res) => {
+  try {
+    const [usuarios] = await db.query(
+      'SELECT id, empresa_id, nome, email, perfil, status AS ativo, created_at FROM usuarios WHERE empresa_id=?',
+      [req.user.empresa_id]
+    );
+    res.json(usuarios);
+  } catch (err) {
+    console.error('Erro ao listar usuários:', err);
+    res.status(500).json({ mensagem: 'Erro ao listar usuários' });
+  }
+};
+
+// Detalhar usuário por ID
+exports.detalhar = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [usuarios] = await db.query(
+      'SELECT id, empresa_id, nome, email, perfil, status AS ativo, created_at FROM usuarios WHERE id=? AND empresa_id=?',
+      [id, req.user.empresa_id]
+    );
+    if (!usuarios.length) return res.status(404).json({ mensagem: "Usuário não encontrado" });
+    res.json(usuarios[0]);
+  } catch (err) {
+    console.error('Erro ao detalhar usuário:', err);
+    res.status(500).json({ mensagem: "Erro ao buscar usuário" });
+  }
+};
+
+// Criar novo usuário (apenas admin pode)
+exports.criar = async (req, res) => {
+  try {
+    const { nome, email, senha, perfil } = req.body;
+    const empresa_id = req.user.empresa_id; // Usa empresa do usuário logado
+
+    const [existe] = await db.query('SELECT * FROM usuarios WHERE email=? AND empresa_id=?', [email, empresa_id]);
+    if (existe.length) return res.status(400).json({ mensagem: "E-mail já cadastrado" });
+
+    const hashSenha = await bcrypt.hash(senha, 10);
+    const status = 'ativo';
+    await db.query(
+      'INSERT INTO usuarios (nome, email, senha, perfil, empresa_id, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [nome, email, hashSenha, perfil, empresa_id, status]
+    );
+    res.status(201).json({ mensagem: "Usuário cadastrado com sucesso!" });
+  } catch (err) {
+    console.error('Erro ao criar usuário:', err);
+    res.status(500).json({ mensagem: "Erro ao cadastrar usuário" });
+  }
+};
+
+// Atualizar usuário
+exports.atualizar = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nome, email, senha, perfil, status } = req.body;
+
+    let query = 'UPDATE usuarios SET nome=?, email=?, perfil=?, status=?';
+    let params = [nome, email, perfil, status];
+
+    if (senha) {
+      query += ', senha=?';
+      const hashSenha = await bcrypt.hash(senha, 10);
+      params.push(hashSenha);
+    }
+
+    query += ' WHERE id=? AND empresa_id=?';
+    params.push(id, req.user.empresa_id);
+
+    await db.query(query, params);
+    res.json({ mensagem: "Usuário atualizado com sucesso!" });
+  } catch (err) {
+    console.error('Erro ao atualizar usuário:', err);
+    res.status(500).json({ mensagem: "Erro ao atualizar usuário" });
+  }
+};
+
+// Deletar usuário (da empresa)
+exports.deletar = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM usuarios WHERE id=? AND empresa_id=?', [id, req.user.empresa_id]);
+    res.json({ mensagem: "Usuário excluído com sucesso!" });
+  } catch (err) {
+    console.error('Erro ao excluir usuário:', err);
+    res.status(500).json({ mensagem: "Erro ao excluir usuário" });
+  }
+};
+
+// Login (checa assinatura/trial)
+exports.login = async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+    const [usuarios] = await db.query(
+      "SELECT * FROM usuarios WHERE email=? AND status='ativo'",
+      [email]
+    );
+    if (!usuarios.length) return res.status(401).json({ mensagem: "Usuário não encontrado" });
+
+    const usuario = usuarios[0];
+    const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+    if (!senhaCorreta) return res.status(401).json({ mensagem: "Senha inválida" });
+
+    // Checa assinatura/trial
+    const [assinaturaRows] = await db.query(
+      'SELECT * FROM assinaturas WHERE empresa_id=? AND status="ativo" ORDER BY data_fim DESC LIMIT 1',
+      [usuario.empresa_id]
+    );
+    const assinatura = assinaturaRows[0];
+    const hoje = new Date().toISOString().slice(0, 10);
+    if (!assinatura || assinatura.data_fim < hoje) {
+      return res.status(403).json({ mensagem: "Seu período de avaliação expirou. Contrate um plano para continuar." });
+    }
+
+    // Login normal
+    const token = jwt.sign(
+      {
+        id: usuario.id,
+        empresa_id: usuario.empresa_id,
+        perfil: usuario.perfil,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+    res.json({
+      token,
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfil: usuario.perfil,
+        empresa_id: usuario.empresa_id
+      }
+    });
+  } catch (err) {
+    console.error('Erro ao logar usuário:', err);
+    res.status(500).json({ mensagem: "Erro ao autenticar usuário" });
+  }
+};
+
+// Registro público (cria empresa, usuário admin, trial 5 dias)
+exports.registrarPublico = async (req, res) => {
+  try {
+    const {
+      nome,
+      email,
+      senha,
+      tipo,        // 'pj' ou 'pf'
+      cnpj,
+      cpf,
+      telefone,
+      segmento,
+      empresa      // nome do negócio/empresa
+    } = req.body;
+
+    // Validação básica
+    if (!nome || !email || !senha || !empresa) {
+      return res.status(400).json({ mensagem: "Campos obrigatórios faltando." });
+    }
+
+    // Checagem de duplicidade
+    const [existeUser] = await db.query('SELECT * FROM usuarios WHERE email=?', [email]);
+    if (existeUser.length) return res.status(400).json({ mensagem: "E-mail já cadastrado" });
+
+    if (tipo === "pj" && cnpj) {
+      const [existeEmpresa] = await db.query('SELECT * FROM empresas WHERE cnpj=?', [cnpj]);
+      if (existeEmpresa.length) return res.status(400).json({ mensagem: "CNPJ já cadastrado" });
+    }
+    if (tipo === "pf" && cpf) {
+      const [existeEmpresa] = await db.query('SELECT * FROM empresas WHERE cnpj=?', [cpf]);
+      if (existeEmpresa.length) return res.status(400).json({ mensagem: "CPF já cadastrado" });
+    }
+
+    // Criação da empresa
+    const [empresaResult] = await db.query(
+      'INSERT INTO empresas (nome, cnpj, email, telefone, plano_id, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [empresa, tipo === 'pj' ? cnpj : cpf, email, telefone, 1, 'ativo']
+    );
+    const empresa_id = empresaResult.insertId;
+
+    // Criação do trial (assinatura Free, 5 dias)
+    const hoje = new Date();
+    const data_inicio = hoje.toISOString().slice(0, 10);
+    const data_fim = new Date(hoje.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    await db.query(
+      'INSERT INTO assinaturas (empresa_id, plano_id, data_inicio, data_fim, status) VALUES (?, ?, ?, ?, ?)',
+      [empresa_id, 1, data_inicio, data_fim, 'ativo']
+    );
+
+    // Criação do usuário admin
+    const hashSenha = await bcrypt.hash(senha, 10);
+    await db.query(
+      'INSERT INTO usuarios (nome, email, senha, perfil, empresa_id, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [nome, email, hashSenha, 'admin', empresa_id, 'ativo']
+    );
+
+    // Buscar usuário recém-criado
+    const [usuarios] = await db.query('SELECT * FROM usuarios WHERE email=?', [email]);
+    const usuario = usuarios[0];
+
+    // Checar assinatura (para login automático)
+    const [assinaturaRows] = await db.query(
+      'SELECT * FROM assinaturas WHERE empresa_id=? AND status="ativo" ORDER BY data_fim DESC LIMIT 1',
+      [empresa_id]
+    );
+    const assinatura = assinaturaRows[0];
+
+    // Token JWT
+    const token = jwt.sign(
+      { id: usuario.id, empresa_id: usuario.empresa_id, perfil: usuario.perfil },
+      process.env.JWT_SECRET, { expiresIn: '12h' }
+    );
+
+    res.status(201).json({
+      mensagem: "Bem-vindo(a)! Empresa cadastrada e trial de 5 dias liberado.",
+      token,
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfil: usuario.perfil,
+        empresa_id: usuario.empresa_id
+      },
+      assinatura
+    });
+
+  } catch (err) {
+    console.error('Erro ao registrar empresa/usuário:', err);
+    res.status(500).json({ mensagem: "Erro ao registrar empresa/usuário." });
+  }
+};
+
+// Recuperação de senha (envio de link por e-mail)
+exports.recuperarSenha = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "E-mail é obrigatório" });
+
+  try {
+    const [usuarios] = await db.query("SELECT * FROM usuarios WHERE email = ?", [email]);
+    if (usuarios.length === 0) {
+      // Sempre responde sucesso para evitar exposição de usuários existentes
+      return res.json({ message: "Se o e-mail estiver cadastrado, você receberá instruções para redefinir sua senha." });
+    }
+
+    // Gere token simples para dev (troque para token real em produção)
+    const token = Math.random().toString(36).substr(2, 8);
+    await db.query("UPDATE usuarios SET reset_token = ?, reset_token_expira = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE email = ?", [token, email]);
+    console.log(`
+      Enviar e-mail para: ${email}
+      Link de redefinição: http://localhost:3000/resetar-senha/${token}
+    `);
+    return res.json({ message: "Se o e-mail estiver cadastrado, você receberá instruções para redefinir sua senha." });
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao processar solicitação." });
+  }
+};
+
+// Redefinir senha com token
+exports.resetarSenha = async (req, res) => {
+  const { token } = req.params;
+  const { novaSenha } = req.body;
+
+  if (!novaSenha) {
+    return res.status(400).json({ error: "Nova senha é obrigatória." });
+  }
+
+  try {
+    const [usuarios] = await db.query(
+      "SELECT * FROM usuarios WHERE reset_token = ? AND reset_token_expira > NOW()",
+      [token]
+    );
+    if (usuarios.length === 0) {
+      return res.status(400).json({ error: "Token inválido ou expirado." });
+    }
+
+    const usuario = usuarios[0];
+    const hashSenha = await bcrypt.hash(novaSenha, 10);
+
+    await db.query(
+      "UPDATE usuarios SET senha = ?, reset_token = NULL, reset_token_expira = NULL WHERE id = ?",
+      [hashSenha, usuario.id]
+    );
+
+    res.json({ message: "Senha redefinida com sucesso. Faça login com a nova senha." });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao redefinir senha." });
+  }
+};
+
+
+
+===== FILE: C:\xampp\htdocs\Mgr\backend\src\config\db.js =====
+
+const mysql = require('mysql2/promise');
+require('dotenv').config();
+
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
+
+module.exports = db;
+
+
+
+===== FILE: C:\xampp\htdocs\Mgr\backend\src\server.js =====
+
+/*import homeRoutes from './routes/homeRoutes.js';*/
+const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
+const authRoutes = require('./routes/authRoutes');
+const homeRoutes = require('./routes/homeRoutes');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api/auth', authRoutes);
+app.use('/api/home', homeRoutes);
+app.use('/home', homeRoutes);
+// Rotas
+app.use('/api/agenda', require('./routes/agendaRoutes'));
+app.use('/api/clientes', require('./routes/clienteRoutes'));
+app.use('/api/profissionais', require('./routes/profissionalRoutes'));
+app.use('/api/servicos', require('./routes/servicoRoutes'));
+app.use('/api/vendas', require('./routes/vendaRoutes'));
+app.use('/api/produtos', require('./routes/produtoRoutes'));
+app.use('/api/financeiro', require('./routes/financeiroRoutes'));
+app.use('/api/relatorios', require('./routes/relatorioRoutes'));
+app.use('/api/config/empresa', require('./routes/empresaRoutes'));
+app.use('/uploads', express.static('uploads'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/usuarios', require('./routes/usuarioRoutes'));
+app.use('/api/agendamento-online', require('./routes/agendamentoOnlineRoutes'));
+app.use('/api/onboarding', require('./routes/onboardingRoutes'));
+app.use('/api', require('./routes/homeRoutes'));
+
+
+
+// Healthcheck
+app.get('/', (req, res) => res.send('ERP SaaS API rodando!'));
+
+const PORT = process.env.PORT || 4000;
+
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+}
+
+module.exports = app;
+
+
+===== FILE: C:\xampp\htdocs\Mgr\backend\src\middlewares\auth.js =====
+
+const jwt = require('jsonwebtoken');
+
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.header('Authorization');
+
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Acesso negado. Token não fornecido.' });
+  }
+  const token = authHeader.split(' ')[1]; // Pega apenas o token, ignorando o 'Bearer'
+if (!token) {
+    return res.status(401).json({ error: 'Token malformado.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.usuario = decoded;
+    next();
+  } catch (error) {
+    console.error('Erro ao verificar token:', error);
+    res.status(401).json({ error: 'Token inválido.' });
+  }
+};
+
+module.exports = authMiddleware;
+
+
+
+===== FILE: C:\xampp\htdocs\Mgr\backend\src\middlewares\acl.js =====
+
+// /backend/src/middlewares/acl.js
+
+/**
+ * Middleware de controle de acesso por perfil de usuário (ACL)
+ * Permite restringir rotas a perfis específicos.
+ * Exemplo de uso: acl(['admin']) ou acl(['admin', 'operador'])
+ */
+
+module.exports = function acl(roles = []) {
+  if (typeof roles === 'string') roles = [roles];
+  
+  return function (req, res, next) {
+
+    if (!req.user || !req.user.perfil) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
+
+    if (!roles.includes(req.user.perfil)) {
+      return res.status(403).json({ message: 'Acesso negado: Permissão insuficiente' });
+    }
+
+    next();
+  };
+};
+
