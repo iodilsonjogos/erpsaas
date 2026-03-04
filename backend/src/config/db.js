@@ -10,9 +10,11 @@ const cfg = {
   user: process.env.DB_USER || "",
   password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "",
+  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  connectTimeout: 10000,
 };
 
 // Falha explícita (pra não conectar “vazio” e te confundir)
@@ -28,8 +30,21 @@ console.log("✅ MySQL cfg:", {
   host: cfg.host,
   user: cfg.user,
   database: cfg.database,
+  port: cfg.port,
 });
 
 const pool = mysql.createPool(cfg);
 
+// Health de conexão (útil pra debug)
+async function testConnection() {
+  const conn = await pool.getConnection();
+  try {
+    await conn.ping();
+    return true;
+  } finally {
+    conn.release();
+  }
+}
+
 module.exports = pool;
+module.exports.testConnection = testConnection;

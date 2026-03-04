@@ -1,42 +1,62 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
-exports.resumo = async (req, res) => {
+exports.dashboardResumo = async (req, res) => {
+  try {
+    const empresa_id = req.user.empresa_id;
 
-  const empresa_id = req.user.empresa_id;
-  const [clientes] = await db.query('SELECT COUNT(*) as total FROM clientes WHERE empresa_id=?', [empresa_id]);
-  const [receita] = await db.query("SELECT SUM(valor_total) as total FROM vendas WHERE empresa_id=? AND MONTH(data) = MONTH(NOW())", [empresa_id]);
-  const [agendas] = await db.query("SELECT COUNT(*) as total FROM agenda WHERE empresa_id=? AND data >= CURDATE()", [empresa_id]);
-  res.json({
-    totalClientes: clientes[0].total,
-    receitaMes: receita[0].total || 0,
-    proximosAgendamentos: agendas[0].total
-  });
-};
+    // Total de clientes
+    const [[clientes]] = await db.query(
+      "SELECT COUNT(*) as total FROM clientes WHERE empresa_id = ?",
+      [empresa_id],
+    );
 
-exports.vendasPorMes = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  // Retorna os últimos 6 meses
-  const [rows] = await db.query(
-    `SELECT DATE_FORMAT(data, '%Y-%m') as mes, SUM(valor_total) as total 
-     FROM vendas 
-     WHERE empresa_id=? AND data >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-     GROUP BY mes
-     ORDER BY mes ASC`, [empresa_id]
-  );
-  res.json(rows);
-};
+    // Total de profissionais
+    const [[profissionais]] = await db.query(
+      "SELECT COUNT(*) as total FROM profissionais WHERE empresa_id = ?",
+      [empresa_id],
+    );
 
-exports.produtosMaisVendidos = async (req, res) => {
-  const empresa_id = req.user.empresa_id;
-  const [rows] = await db.query(
-    `SELECT p.nome, SUM(vi.quantidade) as total 
-     FROM venda_itens vi
-     JOIN produtos p ON vi.produto_id = p.id
-     JOIN vendas v ON v.id = vi.venda_id
-     WHERE v.empresa_id=? 
-     GROUP BY p.nome
-     ORDER BY total DESC
-     LIMIT 5`, [empresa_id]
-  );
-  res.json(rows);
+    // Total de produtos
+    const [[produtos]] = await db.query(
+      "SELECT COUNT(*) as total FROM produtos WHERE empresa_id = ?",
+      [empresa_id],
+    );
+
+    // Total de vendas
+    const [[vendas]] = await db.query(
+      "SELECT COUNT(*) as total FROM vendas WHERE empresa_id = ?",
+      [empresa_id],
+    );
+
+    // Total de serviços
+    const [[servicos]] = await db.query(
+      "SELECT COUNT(*) as total FROM servicos WHERE empresa_id = ?",
+      [empresa_id],
+    );
+
+    // Agenda de hoje
+    const [agendaHoje] = await db.query(
+      `SELECT a.*, c.nome as cliente_nome, p.nome as profissional_nome, s.nome as servico_nome
+       FROM agenda a
+       LEFT JOIN clientes c ON a.cliente_id = c.id
+       LEFT JOIN profissionais p ON a.profissional_id = p.id
+       LEFT JOIN servicos s ON a.servico_id = s.id
+       WHERE a.empresa_id = ? AND a.data = CURDATE()
+       ORDER BY a.hora ASC`,
+      [empresa_id],
+    );
+
+    res.json({
+      clientes: clientes.total,
+      profissionais: profissionais.total,
+      produtos: produtos.total,
+      vendas: vendas.total,
+      servicos: servicos.total,
+      agendaHoje,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Erro ao carregar dashboard", error: error.message });
+  }
 };
